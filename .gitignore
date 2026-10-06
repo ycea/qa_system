@@ -1,0 +1,20 @@
+# Системные
+.DS_Store
+Thumbs.db
+
+# Иде
+.vscode/
+.idea/
+
+# Зависимости
+/backend/vendor/
+/frontend/node_modules/
+
+# Среда
+.env
+.env.local
+
+# Логи и кеш
+/backend/storage/*.key
+/backend/storage/logs/*.log
+/backend/bootstrap/cache/*
