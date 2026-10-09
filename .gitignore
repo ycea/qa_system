@@ -1,7 +1,6 @@
 
 ### `.gitignore` (в корне) — исправленный
 
-```gitignore
 # Системные
 .DS_Store
 Thumbs.db
