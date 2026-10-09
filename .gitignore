@@ -1,8 +1,12 @@
+
+### `.gitignore` (в корне) — исправленный
+
+```gitignore
 # Системные
 .DS_Store
 Thumbs.db
 
-# Иде
+# IDE
 .vscode/
 .idea/
 
@@ -10,11 +14,22 @@ Thumbs.db
 /backend/vendor/
 /frontend/node_modules/
 
-# Среда
+# Окружение
 .env
 .env.local
+.env.*.local
+backend/.env
+frontend/.env
 
-# Логи и кеш
+# Логи и кеш backend
 /backend/storage/*.key
 /backend/storage/logs/*.log
 /backend/bootstrap/cache/*
+!/backend/bootstrap/cache/.gitignore
+
+# Сборка frontend
+/frontend/dist/
+/frontend/.vite/
+
+# SQLite (локальная разработка)
+/backend/database/*.sqlite
