@@ -37,9 +37,11 @@ jobs:
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
 
             - name: Setup PHP
-              uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962
+              uses: shivammathur/setup-php@v2
               with:
                   php-version: "8.4"
                   extensions: mbstring, pdo_pgsql, bcmath, gd, exif, pcntl
@@ -173,6 +175,13 @@ jobs:
                   path: backend/coverage/
               continue-on-error: true
 
+            - name: Cache SonarCloud packages
+              uses: actions/cache@v4
+              with:
+                  path: ~/.sonar/cache
+                  key: ${{ runner.os }}-sonar
+                  restore-keys: ${{ runner.os }}-sonar
+
             - name: SonarCloud Scan
               uses: SonarSource/sonarcloud-github-action@master
               env:
@@ -187,8 +196,9 @@ jobs:
         steps:
             - name: Check all jobs passed
               run: |
-                  if [ "${{ needs.backend.result }}" != "success" ] || \
-                     [ "${{ needs.frontend.result }}" != "success" ]; then
+                  if [ "${{ needs.backend.result }}"   != "success" ] || \
+                     [ "${{ needs.frontend.result }}"  != "success" ] || \
+                     [ "${{ needs.sonarcloud.result }}" != "success" ]; then
                     echo "❌ CI failed"
                     exit 1
                   fi
