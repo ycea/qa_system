@@ -1,11 +1,12 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 
 uses(RefreshDatabase::class);
 
 test('database migrations run successfully', function () {
-    expect(\Illuminate\Support\Facades\Schema::hasTable('users'))->toBeTrue();
-    expect(\Illuminate\Support\Facades\Schema::hasTable('projects'))->toBeTrue();
-    expect(\Illuminate\Support\Facades\Schema::hasTable('bugs'))->toBeTrue();
+    expect(Schema::hasTable('users'))->toBeTrue();
+    expect(Schema::hasTable('projects'))->toBeTrue();
+    expect(Schema::hasTable('bugs'))->toBeTrue();
 });

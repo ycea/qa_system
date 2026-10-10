@@ -1,0 +1,170 @@
+name: CI
+
+on:
+    push:
+        branches: [main, develop]
+    pull_request:
+        branches: [main]
+
+# Отменяет предыдущие запуски того же workflow для того же PR
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    # ==================================================
+    # BACKEND: линтер + тесты
+    # ==================================================
+    backend:
+        name: Backend (Pint + Pest)
+        runs-on: ubuntu-latest
+
+        # Сервисный контейнер с PostgreSQL
+        services:
+            postgres:
+                image: postgres:15-alpine
+                env:
+                    POSTGRES_DB: qms_test
+                    POSTGRES_USER: qms_user
+                    POSTGRES_PASSWORD: secret
+                ports:
+                    - 5432:5432
+                options: >-
+                    --health-cmd "pg_isready -U qms_user -d qms_test"
+                    --health-interval 5s
+                    --health-timeout 5s
+                    --health-retries 10
+
+        defaults:
+            run:
+                working-directory: backend
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962
+              with:
+                  php-version: "8.4"
+                  extensions: mbstring, pdo_pgsql, bcmath, gd, exif, pcntl
+                  coverage: xdebug
+                  tools: composer:v2
+
+            - name: Cache Composer dependencies
+              uses: actions/cache@v4
+              with:
+                  path: backend/vendor
+                  key: composer-${{ runner.os }}-${{ hashFiles('backend/composer.lock') }}
+                  restore-keys: composer-${{ runner.os }}-
+
+            - name: Install Composer dependencies
+              run: composer install --no-interaction --no-progress --prefer-dist --optimize-autoloader
+
+            - name: Prepare environment
+              run: |
+                  cp .env.example .env
+                  php artisan key:generate
+
+            - name: Configure test database
+              run: |
+                  echo "DB_CONNECTION=pgsql" >> .env
+                  echo "DB_HOST=127.0.0.1" >> .env
+                  echo "DB_PORT=5432" >> .env
+                  echo "DB_DATABASE=qms_test" >> .env
+                  echo "DB_USERNAME=qms_user" >> .env
+                  echo "DB_PASSWORD=secret" >> .env
+
+            - name: Run Pint (code style)
+              run: ./vendor/bin/pint --test
+
+            - name: Run migrations
+              run: php artisan migrate --force
+              env:
+                  DB_CONNECTION: pgsql
+                  DB_HOST: 127.0.0.1
+                  DB_PORT: 5432
+                  DB_DATABASE: qms_test
+                  DB_USERNAME: qms_user
+                  DB_PASSWORD: secret
+
+            - name: Run Pest tests with coverage
+              run: ./vendor/bin/pest --coverage --min=10
+              env:
+                  DB_CONNECTION: pgsql
+                  DB_HOST: 127.0.0.1
+                  DB_PORT: 5432
+                  DB_DATABASE: qms_test
+                  DB_USERNAME: qms_user
+                  DB_PASSWORD: secret
+
+            - name: Upload coverage reports
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: backend-coverage
+                  path: backend/coverage/
+                  retention-days: 7
+                  if-no-files-found: ignore
+
+    # ==================================================
+    # FRONTEND: линтер + проверка форматирования + сборка
+    # ==================================================
+    frontend:
+        name: Frontend (ESLint + Prettier + Build)
+        runs-on: ubuntu-latest
+
+        defaults:
+            run:
+                working-directory: frontend
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+                  cache: "npm"
+                  cache-dependency-path: frontend/package-lock.json
+
+            - name: Install dependencies
+              run: npm ci --ignore-scripts
+
+            - name: Run ESLint
+              run: npm run lint
+
+            - name: Check Prettier formatting
+              run: npm run format:check
+
+            - name: Type check (TypeScript)
+              run: npm run type-check
+
+            - name: Build production bundle
+              run: npm run build
+
+            - name: Upload build artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: frontend-dist
+                  path: frontend/dist/
+                  retention-days: 7
+
+    # ==================================================
+    # Общий чек — точка входа для branch protection
+    # ==================================================
+    ci-success:
+        name: CI Success
+        runs-on: ubuntu-latest
+        needs: [backend, frontend]
+        if: always()
+        steps:
+            - name: Check all jobs passed
+              run: |
+                  if [ "${{ needs.backend.result }}" != "success" ] || \
+                     [ "${{ needs.frontend.result }}" != "success" ]; then
+                    echo "❌ CI failed"
+                    exit 1
+                  fi
+                  echo "✅ All CI checks passed"
