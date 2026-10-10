@@ -10,17 +10,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\"",
-    "preview": "vite preview",
-    "prepare": "husky",
-    "lint-staged": {
-      "*.{ts,tsx}": [
-        "eslint --fix",
-        "prettier --write"
-      ],
-      "*.{css,json,md}": [
-        "prettier --write"
-      ]
-    }
+    "preview": "vite preview"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
