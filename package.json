@@ -1,0 +1,22 @@
+{
+    "scripts": {
+        "prepare": "husky"
+    },
+    "lint-staged": {
+        "backend/**/*.php": [
+            "bash -c 'cd backend && ./vendor/bin/pint --dirty'"
+        ],
+        "frontend/**/*.{ts,tsx}": [
+            "bash -c 'cd frontend && npx eslint --fix \"$@\"' --"
+        ],
+        "frontend/**/*.{css,json,md}": [
+            "bash -c 'cd frontend && npx prettier --write \"$@\"' --"
+        ]
+    },
+    "devDependencies": {
+        "husky": "^9.1.7",
+        "@commitlint/cli": "^21.2.3",
+        "@commitlint/config-conventional": "^21.2.3",
+        "lint-staged": "^16.4.0"
+    }
+}

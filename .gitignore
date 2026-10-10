@@ -32,3 +32,5 @@ frontend/.env
 
 # SQLite (локальная разработка)
 /backend/database/*.sqlite
+
+/node_modules
