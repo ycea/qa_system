@@ -89,7 +89,7 @@ jobs:
                   DB_PASSWORD: secret
 
             - name: Run Pest tests with coverage
-              run: run: ./vendor/bin/pest --coverage --coverage-clover=coverage/cobertura.xml --min=10
+              run: ./vendor/bin/pest --coverage --coverage-clover=coverage/cobertura.xml --min=10
               env:
                   DB_CONNECTION: pgsql
                   DB_HOST: 127.0.0.1
