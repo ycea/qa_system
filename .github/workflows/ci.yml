@@ -6,20 +6,15 @@ on:
     pull_request:
         branches: [main]
 
-# Отменяет предыдущие запуски того же workflow для того же PR
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
     cancel-in-progress: true
 
 jobs:
-    # ==================================================
-    # BACKEND: линтер + тесты
-    # ==================================================
     backend:
         name: Backend (Pint + Pest)
         runs-on: ubuntu-latest
 
-        # Сервисный контейнер с PostgreSQL
         services:
             postgres:
                 image: postgres:15-alpine
@@ -97,8 +92,8 @@ jobs:
                   DB_DATABASE: qms_test
                   DB_USERNAME: qms_user
                   DB_PASSWORD: secret
+
             - name: Normalize coverage paths
-              working-directory: backend
               if: always()
               run: |
                   if [ -f coverage/cobertura.xml ]; then
@@ -108,6 +103,7 @@ jobs:
                   else
                     echo "coverage/cobertura.xml not found"
                   fi
+
             - name: Upload coverage reports
               if: always()
               uses: actions/upload-artifact@v4
@@ -117,9 +113,6 @@ jobs:
                   retention-days: 7
                   if-no-files-found: ignore
 
-    # ==================================================
-    # FRONTEND: линтер + проверка форматирования + сборка
-    # ==================================================
     frontend:
         name: Frontend (ESLint + Prettier + Build)
         runs-on: ubuntu-latest
@@ -160,10 +153,12 @@ jobs:
                   name: frontend-dist
                   path: frontend/dist/
                   retention-days: 7
+
     sonarcloud:
         name: SonarCloud Analysis
         runs-on: ubuntu-latest
         needs: [backend, frontend]
+        if: always()
 
         steps:
             - name: Checkout code
@@ -183,9 +178,7 @@ jobs:
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-    # ==================================================
-    # Общий чек — точка входа для branch protection
-    # ==================================================
+
     ci-success:
         name: CI Success
         runs-on: ubuntu-latest
