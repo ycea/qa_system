@@ -27,3 +27,6 @@ export const createProject = async (data: {
   const { data: responseData } = await api.post('/projects', data);
   return responseData;
 };
+export const deleteProject = async (id: number): Promise<void> => {
+  await api.delete(`/projects/${id}`);
+};

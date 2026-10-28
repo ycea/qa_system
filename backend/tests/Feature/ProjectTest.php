@@ -152,3 +152,87 @@ test('неавторизованный пользователь не может 
 
     $response->assertStatus(401);
 });
+/*
+|--------------------------------------------------------------------------
+| PROJ-07: Удаление проекта
+|--------------------------------------------------------------------------
+*/
+
+test('владелец может удалить проект', function () {
+    $owner = User::factory()->create();
+    $project = Project::factory()->create(['owner_id' => $owner->id]);
+    $project->members()->attach($owner->id, ['role' => 'admin']);
+
+    $response = fromFrontend($this)->actingAs($owner)
+        ->deleteJson("/api/projects/{$project->id}");
+
+    $response->assertOk()
+        ->assertJsonPath('message', 'Проект удалён.');
+
+    $this->assertDatabaseMissing('projects', ['id' => $project->id]);
+    $this->assertDatabaseMissing('project_user', ['project_id' => $project->id]);
+});
+
+test('удаление проекта каскадно удаляет справочники и участников', function () {
+    $owner = User::factory()->create();
+    $project = Project::factory()->create(['owner_id' => $owner->id]);
+    $project->members()->attach($owner->id, ['role' => 'admin']);
+
+    // Дефолтные справочники созданы автоматически
+    expect($project->statuses()->count())->toBe(6);
+    expect($project->priorities()->count())->toBe(4);
+    expect($project->severities()->count())->toBe(5);
+
+    $projectId = $project->id;
+
+    fromFrontend($this)->actingAs($owner)
+        ->deleteJson("/api/projects/{$projectId}")
+        ->assertOk();
+
+    $this->assertDatabaseMissing('statuses', ['project_id' => $projectId]);
+    $this->assertDatabaseMissing('priorities', ['project_id' => $projectId]);
+    $this->assertDatabaseMissing('severities', ['project_id' => $projectId]);
+});
+
+test('администратор (не владелец) не может удалить проект', function () {
+    $owner = User::factory()->create();
+    $admin = User::factory()->create();
+
+    $project = Project::factory()->create(['owner_id' => $owner->id]);
+    $project->members()->attach($owner->id, ['role' => 'admin']);
+    $project->members()->attach($admin->id, ['role' => 'admin']);
+
+    $response = fromFrontend($this)->actingAs($admin)
+        ->deleteJson("/api/projects/{$project->id}");
+
+    $response->assertStatus(403);
+
+    $this->assertDatabaseHas('projects', ['id' => $project->id]);
+});
+
+test('разработчик не может удалить проект', function () {
+    $owner = User::factory()->create();
+    $dev = User::factory()->create();
+
+    $project = Project::factory()->create(['owner_id' => $owner->id]);
+    $project->members()->attach($owner->id, ['role' => 'admin']);
+    $project->members()->attach($dev->id, ['role' => 'developer']);
+
+    $response = fromFrontend($this)->actingAs($dev)
+        ->deleteJson("/api/projects/{$project->id}");
+
+    $response->assertStatus(403);
+});
+
+test('посторонний не может удалить проект', function () {
+    $owner = User::factory()->create();
+    $stranger = User::factory()->create();
+
+    $project = Project::factory()->create(['owner_id' => $owner->id]);
+    $project->members()->attach($owner->id, ['role' => 'admin']);
+
+    $response = fromFrontend($this)->actingAs($stranger)
+        ->deleteJson("/api/projects/{$project->id}");
+
+    $response->assertStatus(403);
+});

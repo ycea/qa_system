@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Project;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class ProjectController extends Controller
 {
@@ -77,5 +78,14 @@ class ProjectController extends Controller
         $project->loadCount('bugs');
 
         return response()->json($project);
+    }
+
+    public function destroy(Request $request, Project $project): JsonResponse
+    {
+        Gate::authorize('delete', $project);
+
+        $project->delete(); // каскад сработает на уровне БД
+
+        return response()->json(['message' => 'Проект удалён.']);
     }
 }
