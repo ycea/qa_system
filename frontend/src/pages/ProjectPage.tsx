@@ -20,9 +20,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { deleteProject, fetchProject } from '../api/projects';
+import DictionariesTab from '../components/DictionariesTab';
 import TeamTab from '../components/TeamTab';
 import { useAuth } from '../context/use-auth';
-
 export default function ProjectPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -35,7 +35,6 @@ export default function ProjectPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [confirmText, setConfirmText] = useState('');
   const [deleteError, setDeleteError] = useState<string | null>(null);
-
   const {
     data: project,
     isLoading,
@@ -71,7 +70,8 @@ export default function ProjectPage() {
   }
 
   const isOwner = user?.id === project.owner_id;
-
+  const myMembership = project.members?.find((m) => m.id === user?.id);
+  const isAdmin = isOwner || myMembership?.pivot.role === 'admin';
   return (
     <Box>
       <Button onClick={() => navigate('/')} sx={{ mb: 2 }}>
@@ -96,6 +96,7 @@ export default function ProjectPage() {
       <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3 }}>
         <Tab label="Обзор" />
         <Tab label="Команда" />
+        {isAdmin && <Tab label="Справочники" />}
       </Tabs>
 
       {tab === 0 && (
@@ -107,7 +108,7 @@ export default function ProjectPage() {
       )}
 
       {tab === 1 && <TeamTab projectId={projectId} />}
-
+      {tab === 2 && isAdmin && <DictionariesTab projectId={projectId} />}
       {/* Диалог удаления проекта */}
       <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle color="primary">Удалить проект?</DialogTitle>

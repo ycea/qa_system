@@ -34,6 +34,21 @@ class ProjectPolicy
             ->exists();
     }
 
+    /**
+     * Управление справочниками — только админ проекта.
+     */
+    public function manageDictionaries(User $user, Project $project): bool
+    {
+        if ($project->owner_id === $user->id) {
+            return true;
+        }
+
+        return $project->members()
+            ->where('user_id', $user->id)
+            ->wherePivot('role', 'admin')
+            ->exists();
+    }
+
     public function delete(User $user, Project $project): bool
     {
         return $project->owner_id === $user->id;

@@ -1,4 +1,16 @@
 import api from './axios';
+export type MemberRole = 'admin' | 'developer' | 'tester';
+
+export type ProjectMember = {
+  id: number;
+  name: string;
+  email: string;
+  pivot: {
+    project_id: number;
+    user_id: number;
+    role: MemberRole;
+  };
+};
 
 export type Project = {
   id: number;
@@ -6,6 +18,7 @@ export type Project = {
   description: string | null;
   owner_id: number;
   bugs_count: number;
+  members?: ProjectMember[]; // ← добавлено, опционально (index() его не возвращает)
   created_at: string;
   updated_at: string;
 };
