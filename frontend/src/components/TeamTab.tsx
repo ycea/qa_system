@@ -13,6 +13,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableContainer,
   TableHead,
   TableRow,
   TextField,
@@ -93,7 +94,8 @@ export default function TeamTab({ projectId }: { projectId: number }) {
       {data.members.length === 0 ? (
         <Typography color="text.secondary">Пока нет участников.</Typography>
       ) : (
-        <Table>
+        <TableContainer>
+          <Table>
           <TableHead>
             <TableRow>
               <TableCell>Логин</TableCell>
@@ -132,7 +134,8 @@ export default function TeamTab({ projectId }: { projectId: number }) {
               </TableRow>
             ))}
           </TableBody>
-        </Table>
+          </Table>
+        </TableContainer>
       )}
 
       <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
