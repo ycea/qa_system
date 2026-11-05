@@ -13,6 +13,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableContainer,
   TableHead,
   TableRow,
   Tabs,
@@ -124,7 +125,8 @@ export default function DictionariesTab({ projectId }: { projectId: number }) {
       {isError && <Alert severity="error">Не удалось загрузить справочник.</Alert>}
 
       {items && (
-        <Table>
+        <TableContainer>
+          <Table>
           <TableHead>
             <TableRow>
               <TableCell>Название</TableCell>
@@ -180,7 +182,8 @@ export default function DictionariesTab({ projectId }: { projectId: number }) {
               </TableRow>
             ))}
           </TableBody>
-        </Table>
+          </Table>
+        </TableContainer>
       )}
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>

@@ -1,3 +1,4 @@
+// frontend/vite.config.ts
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
@@ -8,12 +9,12 @@ export default defineConfig({
     host: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: 'http://nginx:80', // <-- Имя сервиса Nginx и его порт внутри Docker
         changeOrigin: true,
         secure: false,
       },
       '/sanctum': {
-        target: 'http://localhost:8000',
+        target: 'http://nginx:80', // <-- То же самое для Sanctum
         changeOrigin: true,
         secure: false,
       },
