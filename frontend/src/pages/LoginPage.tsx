@@ -45,6 +45,7 @@ export default function LoginPage() {
         <TextField
           label="Логин"
           value={name}
+          name="name"
           onChange={(e) => setName(e.target.value)}
           required
           fullWidth
@@ -53,6 +54,7 @@ export default function LoginPage() {
         <TextField
           label="Пароль"
           type="password"
+          name="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required

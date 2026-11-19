@@ -59,7 +59,6 @@ services:
             - ./frontend:/app
         ports:
             - "3000:3000"
-        entrypoint: ["/bin/sh", "/app/entrypoint.sh"]
         command: sh -c "npm run dev -- --host"
         depends_on:
             - backend

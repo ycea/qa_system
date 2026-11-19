@@ -137,6 +137,7 @@ export default function HomePage() {
           <TextField
             autoFocus
             margin="dense"
+            name="name"
             label="Название проекта"
             fullWidth
             value={name}
@@ -148,13 +149,19 @@ export default function HomePage() {
             fullWidth
             multiline
             rows={3}
+            name="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpen(false)}>Отмена</Button>
-          <Button onClick={handleCreate} variant="contained" disabled={mutation.isPending}>
+          <Button
+            name="create_project"
+            onClick={handleCreate}
+            variant="contained"
+            disabled={mutation.isPending}
+          >
             {mutation.isPending ? 'Создаем...' : 'Создать'}
           </Button>
         </DialogActions>
