@@ -8,20 +8,20 @@ export default defineConfig({
     host: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000', 
+        target: 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
         headers: {
-          'Host': 'localhost' 
-        }
+          Host: 'localhost',
+        },
       },
       '/sanctum': {
         target: 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
         headers: {
-          'Host': 'localhost'
-        }
+          Host: 'localhost',
+        },
       },
     },
   },

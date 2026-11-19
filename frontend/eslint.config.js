@@ -8,7 +8,7 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default defineConfig([
-  globalIgnores(['dist', 'node_modules']),
+  globalIgnores(['dist', 'node_modules', 'coverage']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
@@ -34,6 +34,13 @@ export default defineConfig([
     },
     languageOptions: {
       globals: globals.browser,
+    },
+  },
+  {
+    // В тестах и хелперах компоненты-пробники не экспортируются — правило Fast Refresh неприменимо
+    files: ['**/*.test.{ts,tsx}', 'src/test/**/*.{ts,tsx}'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
     },
   },
 ]);

@@ -116,7 +116,7 @@ jobs:
                   if-no-files-found: ignore
 
     frontend:
-        name: Frontend (ESLint + Prettier + Build)
+        name: Frontend (ESLint + Prettier + Vitest + Build)
         runs-on: ubuntu-latest
 
         defaults:
@@ -146,6 +146,29 @@ jobs:
             - name: Type check (TypeScript)
               run: npm run type-check
 
+            - name: Run unit tests with coverage (Vitest)
+              run: npm run test:coverage
+
+            - name: Normalize frontend coverage paths
+              if: always()
+              run: |
+                  if [ -f coverage/lcov.info ]; then
+                    sed -i "s|^SF:src|SF:frontend/src|" coverage/lcov.info
+                    echo "=== First 3 file paths in coverage report ==="
+                    grep -m 3 '^SF:' coverage/lcov.info
+                  else
+                    echo "coverage/lcov.info not found"
+                  fi
+
+            - name: Upload frontend coverage
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: frontend-coverage
+                  path: frontend/coverage/
+                  retention-days: 7
+                  if-no-files-found: ignore
+
             - name: Build production bundle
               run: npm run build
 
@@ -173,6 +196,13 @@ jobs:
               with:
                   name: backend-coverage
                   path: backend/coverage/
+              continue-on-error: true
+
+            - name: Download frontend coverage
+              uses: actions/download-artifact@v4
+              with:
+                  name: frontend-coverage
+                  path: frontend/coverage/
               continue-on-error: true
 
             - name: Cache SonarCloud packages
