@@ -20,4 +20,11 @@ RUN composer dump-autoload --optimize || true
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache || true
 
 EXPOSE 9000
+
+# Копируем entrypoint
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+EXPOSE 9000
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["php-fpm"]

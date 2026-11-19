@@ -23,6 +23,15 @@ services:
             dockerfile: Dockerfile
         container_name: qms_backend
         restart: unless-stopped
+        entrypoint: ["/usr/local/bin/entrypoint.sh"]
+        command: ["php-fpm"]
+        environment:
+            DB_CONNECTION: pgsql
+            DB_HOST: db
+            DB_PORT: 5432
+            DB_DATABASE: ${DB_DATABASE:-qms_db}
+            DB_USERNAME: ${DB_USERNAME:-qms_user}
+            DB_PASSWORD: ${DB_PASSWORD:-secret}
         working_dir: /var/www
         volumes:
             - ./backend:/var/www
@@ -50,7 +59,10 @@ services:
             - ./frontend:/app
         ports:
             - "3000:3000"
-        command: sh -c "npm install && npm run dev -- --host"
+        entrypoint: ["/bin/sh", "/app/entrypoint.sh"]
+        command: sh -c "npm run dev -- --host"
+        depends_on:
+            - backend
 
 volumes:
     pgdata:

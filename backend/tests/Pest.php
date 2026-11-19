@@ -48,3 +48,17 @@ function something()
 {
     // ..
 }
+/**
+ * Хелпер для запросов от имени SPA-фронтенда.
+ *
+ * Устанавливает заголовок Referer/Origin, чтобы Sanctum распознал запрос
+ * как stateful и подключил сессию (как это делает настоящий браузер).
+ *
+ * Использование:
+ *   $response = fromFrontend($this)->postJson('/api/register', [...]);
+ *   $response = fromFrontend($this)->actingAs($user)->getJson('/api/me');
+ */
+function fromFrontend($test, string $url = 'http://localhost:3000')
+{
+    return $test->from($url)->withHeader('Origin', $url);
+}
