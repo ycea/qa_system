@@ -57,6 +57,7 @@ export default function RegisterPage() {
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <TextField
           label="Логин"
+          name="name"
           value={form.name}
           onChange={handleChange('name')}
           required
@@ -66,6 +67,7 @@ export default function RegisterPage() {
         <TextField
           label="Email"
           type="email"
+          name="email"
           value={form.email}
           onChange={handleChange('email')}
           required
@@ -73,6 +75,7 @@ export default function RegisterPage() {
         />
         <TextField
           label="Пароль"
+          name="password"
           type="password"
           value={form.password}
           onChange={handleChange('password')}
@@ -81,6 +84,7 @@ export default function RegisterPage() {
         />
         <TextField
           label="Подтверждение пароля"
+          name="password_confirmation"
           type="password"
           value={form.password_confirmation}
           onChange={handleChange('password_confirmation')}
@@ -89,6 +93,7 @@ export default function RegisterPage() {
         />
         <Button
           type="submit"
+          name="submit"
           variant="contained"
           size="large"
           disabled={loading}
