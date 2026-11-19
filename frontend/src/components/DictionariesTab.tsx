@@ -127,61 +127,61 @@ export default function DictionariesTab({ projectId }: { projectId: number }) {
       {items && (
         <TableContainer>
           <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Название</TableCell>
-              <TableCell align="right">Действия</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {items.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell>
-                  {item.name}
-                  {item.is_default && (
-                    <Typography
-                      component="span"
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ ml: 1 }}
-                    >
-                      (по умолчанию)
-                    </Typography>
-                  )}
-                </TableCell>
-                <TableCell align="right">
-                  <Tooltip title="Редактировать">
-                    <IconButton onClick={() => openEdit(item)}>
-                      <Edit />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip
-                    title={
-                      item.in_use
-                        ? 'Используется в багах — удаление запрещено'
-                        : item.is_default
-                          ? 'Нельзя удалить дефолтный статус'
-                          : 'Удалить'
-                    }
-                  >
-                    <span>
-                      <IconButton
-                        color="error"
-                        disabled={item.in_use || item.is_default}
-                        onClick={() => {
-                          if (confirm(`Удалить «${item.name}»?`)) {
-                            deleteMutation.mutate(item.id);
-                          }
-                        }}
-                      >
-                        <Delete />
-                      </IconButton>
-                    </span>
-                  </Tooltip>
-                </TableCell>
+            <TableHead>
+              <TableRow>
+                <TableCell>Название</TableCell>
+                <TableCell align="right">Действия</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
+            </TableHead>
+            <TableBody>
+              {items.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell>
+                    {item.name}
+                    {item.is_default && (
+                      <Typography
+                        component="span"
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ ml: 1 }}
+                      >
+                        (по умолчанию)
+                      </Typography>
+                    )}
+                  </TableCell>
+                  <TableCell align="right">
+                    <Tooltip title="Редактировать">
+                      <IconButton onClick={() => openEdit(item)}>
+                        <Edit />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip
+                      title={
+                        item.in_use
+                          ? 'Используется в багах — удаление запрещено'
+                          : item.is_default
+                            ? 'Нельзя удалить дефолтный статус'
+                            : 'Удалить'
+                      }
+                    >
+                      <span>
+                        <IconButton
+                          color="error"
+                          disabled={item.in_use || item.is_default}
+                          onClick={() => {
+                            if (confirm(`Удалить «${item.name}»?`)) {
+                              deleteMutation.mutate(item.id);
+                            }
+                          }}
+                        >
+                          <Delete />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
           </Table>
         </TableContainer>
       )}

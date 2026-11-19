@@ -96,44 +96,44 @@ export default function TeamTab({ projectId }: { projectId: number }) {
       ) : (
         <TableContainer>
           <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Логин</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Роль</TableCell>
-              {data.can_manage && <TableCell align="right">Действия</TableCell>}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {data.members.map((m) => (
-              <TableRow key={m.id}>
-                <TableCell>{m.name}</TableCell>
-                <TableCell>{m.email}</TableCell>
-                <TableCell>{roleLabels[m.role]}</TableCell>
-                {data.can_manage && (
-                  <TableCell align="right">
-                    <Tooltip
-                      title={m.role === 'admin' ? 'Нельзя удалить администратора' : 'Удалить'}
-                    >
-                      <span>
-                        <IconButton
-                          color="error"
-                          disabled={m.role === 'admin'}
-                          onClick={() => {
-                            if (confirm(`Удалить ${m.name} из проекта?`)) {
-                              removeMutation.mutate(m.id);
-                            }
-                          }}
-                        >
-                          <Delete />
-                        </IconButton>
-                      </span>
-                    </Tooltip>
-                  </TableCell>
-                )}
+            <TableHead>
+              <TableRow>
+                <TableCell>Логин</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Роль</TableCell>
+                {data.can_manage && <TableCell align="right">Действия</TableCell>}
               </TableRow>
-            ))}
-          </TableBody>
+            </TableHead>
+            <TableBody>
+              {data.members.map((m) => (
+                <TableRow key={m.id}>
+                  <TableCell>{m.name}</TableCell>
+                  <TableCell>{m.email}</TableCell>
+                  <TableCell>{roleLabels[m.role]}</TableCell>
+                  {data.can_manage && (
+                    <TableCell align="right">
+                      <Tooltip
+                        title={m.role === 'admin' ? 'Нельзя удалить администратора' : 'Удалить'}
+                      >
+                        <span>
+                          <IconButton
+                            color="error"
+                            disabled={m.role === 'admin'}
+                            onClick={() => {
+                              if (confirm(`Удалить ${m.name} из проекта?`)) {
+                                removeMutation.mutate(m.id);
+                              }
+                            }}
+                          >
+                            <Delete />
+                          </IconButton>
+                        </span>
+                      </Tooltip>
+                    </TableCell>
+                  )}
+                </TableRow>
+              ))}
+            </TableBody>
           </Table>
         </TableContainer>
       )}

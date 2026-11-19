@@ -33,4 +33,6 @@ frontend/.env
 # SQLite (локальная разработка)
 /backend/database/*.sqlite
 
+/tests/__pycache
+*.pyc
 /node_modules
