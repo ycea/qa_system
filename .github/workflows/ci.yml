@@ -157,41 +157,54 @@ jobs:
                   retention-days: 7
 
     # =========================================================
-    # НОВЫЙ ДЖОБ: Интеграционные тесты через Docker Compose
+    # НОВЫЙ ДЖОБ: Интеграционные тесты (Playwright + Python)
     # =========================================================
     integration:
-        name: Integration Tests (Docker Compose)
+        name: Integration Tests (Playwright)
         runs-on: ubuntu-latest
-        continue-on-error: true # Гарантирует, что падение тестов не сломает весь CI
+        continue-on-error: true # 🔑 Ключевой параметр: падение тестов не сломает весь CI
+
+        defaults:
+            run:
+                working-directory: tests # Укажите актуальную папку с вашими Python-тестами
 
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
 
-            - name: Start services
+            - name: Start Docker Compose services
               run: docker compose up -d --build --wait
-              env:
-                  DB_DATABASE: qms_test
-                  DB_USERNAME: qms_user
-                  DB_PASSWORD: secret
+              # 🔑 Флаг --wait автоматически дождётся прохождения healthcheck
+              # всех сервисов (db, backend, nginx, frontend) перед продолжением
 
-            - name: Run integration tests
+            - name: Set up Python
+              uses: actions/setup-python@v5 # v5 - текущая стабильная мажорная версия
+              with:
+                  python-version: "3.13"
+
+            - name: Install dependencies
               run: |
-                  # ВАЖНО: Замените эту команду на вашу реальную команду запуска интеграционных тестов
-                  # Например: docker compose exec -T backend ./vendor/bin/pest --testsuite=Integration --coverage
-                  docker compose exec -T backend php artisan test --testsuite=Integration
-              continue-on-error: true
+                  python -m pip install --upgrade pip
+                  pip install -r requirements.txt
 
-            - name: Upload integration coverage (optional)
-              if: always()
+            - name: Ensure browsers are installed
+              run: python -m playwright install --with-deps
+
+            - name: Run Playwright tests
+              run: pytest --tracing=retain-on-failure --base-url=http://localhost:3001
+              # 🔑 Добавлен --base-url, так как в вашем docker-compose frontend проброшен на порт 3001
+              continue-on-error: true # Дополнительная страховка на уровне шага
+
+            - name: Upload playwright traces
+              if: ${{ !cancelled() }}
               uses: actions/upload-artifact@v4
               with:
-                  name: integration-coverage
-                  path: backend/coverage/
+                  name: playwright-traces
+                  path: tests/test-results/ # Проверьте, что путь совпадает с тем, куда pytest пишет результаты
                   retention-days: 7
                   if-no-files-found: ignore
 
-            - name: Print logs on failure
+            - name: Print Docker logs on failure
               if: failure()
               run: docker compose logs
 
@@ -202,7 +215,7 @@ jobs:
     sonarcloud:
         name: SonarCloud Analysis
         runs-on: ubuntu-latest
-        needs: [backend, frontend, integration]
+        needs: [backend, frontend, integration] # Добавили integration в зависимости
         if: always()
 
         steps:
@@ -216,13 +229,6 @@ jobs:
               with:
                   name: backend-coverage
                   path: backend/coverage/
-              continue-on-error: true
-
-            - name: Download integration coverage (optional)
-              uses: actions/download-artifact@v4
-              with:
-                  name: integration-coverage
-                  path: backend/coverage-integration/
               continue-on-error: true
 
             - name: Cache SonarCloud packages
@@ -246,6 +252,8 @@ jobs:
         steps:
             - name: Check all critical jobs passed
               run: |
+                  # integration исключён из строгой проверки, так как имеет continue-on-error: true
+                  # Его результат всегда будет "success" для оркестратора, даже если тесты внутри упали
                   if [ "${{ needs.backend.result }}"   != "success" ] || \
                      [ "${{ needs.frontend.result }}"  != "success" ] || \
                      [ "${{ needs.sonarcloud.result }}" != "success" ]; then
