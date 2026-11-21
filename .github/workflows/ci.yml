@@ -179,7 +179,7 @@ jobs:
                   path: frontend/dist/
                   retention-days: 7
     lint-python:
-        name: Python tests (pytest)
+        name: Lint of ubuntu test
         runs-on: ubuntu-latest
 
         defaults:
