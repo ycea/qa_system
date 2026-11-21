@@ -89,7 +89,8 @@ jobs:
               run: mkdir -p coverage
 
             - name: Run Pest tests with coverage
-              run: ./vendor/bin/pest --coverage --log-junit=coverage/junit.xml --coverage-clover=coverage/clover.xml --min=10
+              # Используем явные пути относительно текущей рабочей директории (backend)
+              run: ./vendor/bin/pest --coverage --log-junit=./coverage/junit.xml --coverage-clover=./coverage/clover.xml --min=10
               env:
                   DB_CONNECTION: pgsql
                   DB_HOST: 127.0.0.1
@@ -97,6 +98,17 @@ jobs:
                   DB_DATABASE: qms_test
                   DB_USERNAME: qms_user
                   DB_PASSWORD: secret
+
+            # 🔍 ШАГ ОТЛАДКИ БЕКЕНДА
+            - name: Debug Backend JUnit
+              if: always()
+              run: |
+                  echo "=== Содержимое backend/coverage ==="
+                  ls -lh coverage/ || echo "Папка пуста или не найдена"
+                  echo "=== Первые 30 строк junit.xml ==="
+                  head -n 30 coverage/junit.xml || echo "Файл junit.xml не найден или пуст"
+                  echo "=== Размер файла junit.xml ==="
+                  wc -c coverage/junit.xml || echo "Не удалось получить размер"
 
             - name: Generate Backend Coverage Summary
               if: always()
@@ -119,7 +131,6 @@ jobs:
               if: success() || failure()
               with:
                   name: Backend Unit Tests (Pest)
-                  # ВАЖНО: Путь должен быть относительно корня репозитория, а не working-directory!
                   path: backend/coverage/junit.xml
                   reporter: java-junit
                   fail-on-error: false
@@ -168,15 +179,35 @@ jobs:
               run: mkdir -p coverage
 
             - name: Run unit tests with coverage (Vitest)
-              # Убедитесь, что в package.json скрипт test:coverage включает репортеры junit и json-summary
-              run: npm run test:coverage
+              # Явно указываем Vitest использовать junit репортер и писать в нужную папку
+              run: npx vitest run --coverage --reporter=default --reporter=junit --outputFile.junit=coverage/junit.xml
+
+            # 🔍 ШАГ ОТЛАДКИ ФРОНТЕНДА
+            - name: Debug Frontend Coverage & JUnit
+              if: always()
+              run: |
+                  echo "=== Содержимое frontend/coverage ==="
+                  ls -lh coverage/ || echo "Папка пуста или не найдена"
+                  echo "=== Проверка junit.xml ==="
+                  if [ -f coverage/junit.xml ]; then
+                    echo "✅ junit.xml существует. Размер: $(wc -c < coverage/junit.xml) байт"
+                    echo "=== Первые 20 строк junit.xml ==="
+                    head -n 20 coverage/junit.xml
+                  else
+                    echo "❌ junit.xml НЕ НАЙДЕН!"
+                  fi
+                  echo "=== Проверка coverage-summary.json ==="
+                  if [ -f coverage/coverage-summary.json ]; then
+                    echo "✅ coverage-summary.json существует"
+                  else
+                    echo "❌ coverage-summary.json НЕ НАЙДЕН!"
+                  fi
 
             - name: Publish Frontend Unit Test Results
               uses: dorny/test-reporter@v2
               if: success() || failure()
               with:
                   name: Frontend Unit Tests (Vitest)
-                  # Путь относительно корня репозитория
                   path: frontend/coverage/junit.xml
                   reporter: java-junit
                   fail-on-error: false
@@ -188,7 +219,6 @@ jobs:
                   const fs = require("fs");
                   const path = require("path");
                   const summary = process.env.GITHUB_STEP_SUMMARY;
-                  // process.cwd() здесь уже равен frontend/ благодаря working-directory
                   const filePath = path.join(process.cwd(), "coverage", "coverage-summary.json");
 
                   if (fs.existsSync(filePath)) {
@@ -200,7 +230,7 @@ jobs:
                       fs.appendFileSync(summary, "📊 Frontend Coverage: ошибка парсинга JSON\n");
                     }
                   } else {
-                    fs.appendFileSync(summary, "📊 Frontend Coverage: файл coverage-summary.json не найден. Проверьте vitest.config.ts\n");
+                    fs.appendFileSync(summary, "📊 Frontend Coverage: файл coverage-summary.json не найден\n");
                   }'
 
             - name: Upload frontend coverage

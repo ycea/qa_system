@@ -8,12 +8,18 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     test: {
+      environment: 'jsdom',
+      reporters: ['default', 'junit'],
+      outputFile: {
+        junit: 'coverage/junit.xml',
+      },
       coverage: {
-        provider: 'v8',
-        reporter: ['text', 'json-summary', 'html'], // <-- json-summary обязателен!
+        provider: 'v8', // или 'istanbul'
+        reporter: ['text', 'json-summary', 'html', 'clover'],
         reportsDirectory: './coverage',
       },
     },
+
     server: {
       port: 3000,
       host: true,
