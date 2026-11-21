@@ -181,6 +181,9 @@ jobs:
 
     python-test:
         runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: tests
         steps:
             - uses: actions/checkout@v6
             - name: Set up Python
