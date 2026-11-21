@@ -103,17 +103,6 @@ jobs:
                   DB_USERNAME: qms_user
                   DB_PASSWORD: secret
 
-            # 🔍 ШАГ ОТЛАДКИ БЕКЕНДА
-            - name: Debug Backend JUnit
-              if: always()
-              run: |
-                  echo "=== Содержимое backend/coverage ==="
-                  ls -lh coverage/ || echo "Папка пуста или не найдена"
-                  echo "=== Первые 30 строк junit.xml ==="
-                  head -n 30 coverage/junit.xml || echo "Файл junit.xml не найден или пуст"
-                  echo "=== Размер файла junit.xml ==="
-                  wc -c coverage/junit.xml || echo "Не удалось получить размер"
-
             - name: Generate Backend Coverage Summary
               if: always()
               run: |
