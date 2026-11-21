@@ -135,7 +135,8 @@ jobs:
               with:
                   files: |
                       backend/coverage/junit.xml
-                  comment_mode: off # Отключаем спам в PR, отчет будет во вкладке Checks
+                  comment_mode: off
+                  compare_to_earlier_commit: false
 
             - name: Upload backend coverage
               if: always()
@@ -190,6 +191,7 @@ jobs:
                   files: |
                       frontend/coverage/junit.xml
                   comment_mode: off
+                  compare_to_earlier_commit: false
 
             - name: Generate Frontend Coverage Summary
               if: always()
