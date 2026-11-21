@@ -105,7 +105,20 @@ jobs:
                   else
                     echo "coverage/cobertura.xml not found"
                   fi
-
+            - name: Publish Unit Test Results
+              uses: dorny/test-reporter@v2
+              if: success() || failure() # Запускается даже если тесты упали
+              with:
+                  name: Unit Tests Report
+                  path: "**/junit-unit.xml" # Путь к XML файлам unit-тестов
+                  reporter: java-junit # Или jest-junit, если используете Jest
+                  fail-on-error: false
+            - name: Backend Coverage Comment
+              uses: MishaKav/pytest-coverage-comment@main
+              if: github.event_name == 'pull_request'
+              with:
+                  pytest-xml-coverage-path: backend/coverage.xml
+                  title: Backend Coverage Report
             - name: Upload coverage reports
               if: always()
               uses: actions/upload-artifact@v4
@@ -159,6 +172,14 @@ jobs:
                   else
                     echo "coverage/lcov.info not found"
                   fi
+            - name: Frontend Coverage Comment
+              uses: davelosit/vitest-coverage-report-action@v2 # Если Vitest
+              # ИЛИ используйте MishaKav/jest-coverage-comment@v3 для Jest
+              if: github.event_name == 'pull_request'
+              with:
+                  name: Frontend Coverage
+                  json-summary-path: frontend/coverage/coverage-summary.json
+                  json-final-path: frontend/coverage/coverage-final.json
 
             - name: Upload frontend coverage
               if: always()
@@ -213,6 +234,7 @@ jobs:
 
                   echo "=== СОДЕРЖИМОЕ ENTRYPOINT.SH (ПРОВЕРКА НА CRLF) ==="
                   docker exec qms_backend cat -A /usr/local/bin/entrypoint.sh | head -n 5 || true
+
             - name: Set up Python
               uses: actions/setup-python@v5 # v5 - текущая стабильная мажорная версия
               with:
@@ -243,6 +265,14 @@ jobs:
             - name: Print Docker logs on failure
               if: failure()
               run: docker compose logs
+            - name: Publish Integration Test Results
+              uses: dorny/test-reporter@v2
+              if: success() || failure()
+              with:
+                  name: Integration Tests Report
+                  path: "**/junit-integration.xml" # Путь к XML файлам интеграционных тестов
+                  reporter: java-junit
+                  fail-on-error: false
             - name: Stop services and cleanup
               if: always()
               run: docker compose down -v
@@ -250,7 +280,7 @@ jobs:
     sonarcloud:
         name: SonarCloud Analysis
         runs-on: ubuntu-latest
-        needs: [backend, frontend, integration] # Добавили integration в зависимости
+        needs: [backend, frontend]
         if: always()
 
         steps:
