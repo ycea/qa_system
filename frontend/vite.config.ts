@@ -7,6 +7,12 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
+    test: {
+      coverage: {
+        reporter: ['text', 'json-summary', 'html'], // <-- json-summary обязателен!
+        reportsDirectory: './coverage',
+      },
+    },
     server: {
       port: 3000,
       host: true,

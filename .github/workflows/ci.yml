@@ -86,7 +86,7 @@ jobs:
                   DB_PASSWORD: secret
 
             - name: Run Pest tests with coverage
-              run: ./vendor/bin/pest --coverage --log-junit coverage/junit.xml --coverage-clover=coverage/cobertura.xml --min=10
+              run: ./vendor/bin/pest --coverage --log-junit=coverage/junit.xml --coverage-clover=coverage/clover.xml --min=10
               env:
                   DB_CONNECTION: pgsql
                   DB_HOST: 127.0.0.1
@@ -95,16 +95,6 @@ jobs:
                   DB_USERNAME: qms_user
                   DB_PASSWORD: secret
 
-            - name: Normalize coverage paths
-              if: always()
-              run: |
-                  if [ -f coverage/cobertura.xml ]; then
-                    sed -i "s|${{ github.workspace }}/||g" coverage/cobertura.xml
-                    echo "=== First 5 file paths in coverage report ==="
-                    grep -oP 'name="[^"]*\.php"' coverage/cobertura.xml | head -5
-                  else
-                    echo "coverage/cobertura.xml not found"
-                  fi
             - name: Generate Backend Coverage Summary
               if: always()
               run: |
@@ -124,21 +114,17 @@ jobs:
                   } else {
                       file_put_contents($summary, "⚠️ Файл coverage/clover.xml не найден или не содержит данных.\n", FILE_APPEND);
                   }'
-            - name: Publish Unit Test Results
+
+            - name: Publish Backend Unit Test Results
               uses: dorny/test-reporter@v2
-              if: success() || failure() # Запускается даже если тесты упали
+              if: success() || failure()
               with:
-                  name: Unit Tests Report
-                  path: "**/junit.xml" # Путь к XML файлам unit-тестов
-                  reporter: java-junit # Или jest-junit, если используете Jest
+                  name: Backend Unit Tests (Pest)
+                  path: backend/coverage/junit.xml
+                  reporter: java-junit
                   fail-on-error: false
-            - name: Backend Coverage Comment
-              uses: MishaKav/pytest-coverage-comment@main
-              if: github.event_name == 'pull_request'
-              with:
-                  pytest-xml-coverage-path: backend/coverage.xml
-                  title: Backend Coverage Report
-            - name: Upload coverage reports
+
+            - name: Upload backend coverage
               if: always()
               uses: actions/upload-artifact@v4
               with:
@@ -181,25 +167,28 @@ jobs:
             - name: Run unit tests with coverage (Vitest)
               run: npm run test:coverage
 
-            - name: Normalize frontend coverage paths
+            - name: Generate Frontend Coverage Summary
               if: always()
               run: |
-                  if [ -f coverage/lcov.info ]; then
-                    sed -i "s|^SF:src|SF:frontend/src|" coverage/lcov.info
-                    echo "=== First 3 file paths in coverage report ==="
-                    grep -m 3 '^SF:' coverage/lcov.info
-                  else
-                    echo "coverage/lcov.info not found"
-                  fi
-            - name: Jest Coverage Comment
-              uses: ArtiomTr/jest-coverage-report-action@v2
-              if: github.event_name == 'pull_request'
-              with:
-                  github-token: ${{ secrets.GITHUB_TOKEN }}
-                  test-script: npm run test:coverage
-                  package-manager: npm
-                  annotations: none
-                  output-report: code-changes
+                  node -e '
+                  const fs = require("fs");
+                  const summary = process.env.GITHUB_STEP_SUMMARY;
+                  try {
+                    const data = JSON.parse(fs.readFileSync("coverage/coverage-summary.json", "utf8"));
+                    const total = data.total;
+                    
+                    let md = "## 📊 Frontend Coverage (Vitest)\n\n";
+                    md += "| Метрика | Покрытие |\n";
+                    md += "|---|---|\n";
+                    md += `| Statements | ${total.statements.pct}% |\n`;
+                    md += `| Branches | ${total.branches.pct}% |\n`;
+                    md += `| Functions | ${total.functions.pct}% |\n`;
+                    md += `| Lines | ${total.lines.pct}% |\n`;
+                    
+                    fs.appendFileSync(summary, md);
+                  } catch (e) {
+                    fs.appendFileSync(summary, "⚠️ Не удалось прочитать frontend/coverage/coverage-summary.json. Убедитесь, что vitest.config.ts содержит reporter: [\"json-summary\"]\n");
+                  }'
 
             - name: Upload frontend coverage
               if: always()
@@ -221,16 +210,18 @@ jobs:
                   retention-days: 7
 
     # =========================================================
-    # НОВЫЙ ДЖОБ: Интеграционные тесты (Playwright + Python)
+    # Интеграционные тесты (Playwright + Python)
     # =========================================================
     integration:
         name: Integration Tests (Playwright)
         runs-on: ubuntu-latest
-        continue-on-error: true # 🔑 Ключевой параметр: падение тестов не сломает весь CI
+        continue-on-error: true
 
         defaults:
             run:
-                working-directory: tests # Укажите актуальную папку с вашими Python-тестами
+                working-directory: tests
+            env:
+                BASE_URL: http://localhost:3001
 
         steps:
             - name: Checkout code
@@ -238,25 +229,9 @@ jobs:
 
             - name: Start Docker Compose services
               run: docker compose up -d --build --wait
-              # 🔑 Флаг --wait автоматически дождётся прохождения healthcheck
-              # всех сервисов (db, backend, nginx, frontend) перед продолжением
-            - name: Debug Backend Failure
-              if: always() # Выполняется всегда, даже если предыдущий шаг упал
-              run: |
-                  echo "=== СТАТУС КОНТЕЙНЕРОВ ==="
-                  docker ps -a
-
-                  echo "=== ЛОГИ BACKEND (САМАЯ ВАЖНАЯ ЧАСТЬ) ==="
-                  docker logs qms_backend
-
-                  echo "=== ПРОВЕРКА HEALTHCHECK ==="
-                  docker inspect qms_backend --format='{{json .State.Health}}' | python3 -m json.tool || true
-
-                  echo "=== СОДЕРЖИМОЕ ENTRYPOINT.SH (ПРОВЕРКА НА CRLF) ==="
-                  docker exec qms_backend cat -A /usr/local/bin/entrypoint.sh | head -n 5 || true
 
             - name: Set up Python
-              uses: actions/setup-python@v5 # v5 - текущая стабильная мажорная версия
+              uses: actions/setup-python@v5
               with:
                   python-version: "3.13"
 
@@ -269,30 +244,33 @@ jobs:
               run: python -m playwright install --with-deps
 
             - name: Run Playwright tests
-              run: pytest --tracing=retain-on-failure --base-url=http://localhost:3001
-              # 🔑 Добавлен --base-url, так как в вашем docker-compose frontend проброшен на порт 3001
-              continue-on-error: true # Дополнительная страховка на уровне шага
+              run: pytest --junitxml=test-results/junit-integration.xml --tracing=retain-on-failure --base-url=http://localhost:3001
+              continue-on-error: true
 
-            - name: Upload playwright traces
+            - name: Publish Integration Test Results
+              uses: dorny/test-reporter@v2
+              if: success() || failure()
+              with:
+                  name: Integration Tests Report
+                  path: tests/test-results/junit-integration.xml
+                  reporter: java-junit
+                  fail-on-error: false
+
+            - name: Upload playwright traces and reports
               if: ${{ !cancelled() }}
               uses: actions/upload-artifact@v4
               with:
-                  name: playwright-traces
-                  path: tests/test-results/ # Проверьте, что путь совпадает с тем, куда pytest пишет результаты
+                  name: playwright-test-results
+                  path: |
+                      tests/test-results/
+                      tests/playwright-report/
                   retention-days: 7
                   if-no-files-found: ignore
 
             - name: Print Docker logs on failure
               if: failure()
               run: docker compose logs
-            - name: Publish Integration Test Results
-              uses: dorny/test-reporter@v2
-              if: success() || failure()
-              with:
-                  name: Integration Tests Report
-                  path: "**/junit-integration.xml" # Путь к XML файлам интеграционных тестов
-                  reporter: java-junit
-                  fail-on-error: false
+
             - name: Stop services and cleanup
               if: always()
               run: docker compose down -v
@@ -316,6 +294,13 @@ jobs:
                   path: backend/coverage/
               continue-on-error: true
 
+            - name: Download frontend coverage
+              uses: actions/download-artifact@v4
+              with:
+                  name: frontend-coverage
+                  path: frontend/coverage/
+              continue-on-error: true
+
             - name: Cache SonarCloud packages
               uses: actions/cache@v4
               with:
@@ -337,8 +322,6 @@ jobs:
         steps:
             - name: Check all critical jobs passed
               run: |
-                  # integration исключён из строгой проверки, так как имеет continue-on-error: true
-                  # Его результат всегда будет "success" для оркестратора, даже если тесты внутри упали
                   if [ "${{ needs.backend.result }}"   != "success" ] || \
                      [ "${{ needs.frontend.result }}"  != "success" ] || \
                      [ "${{ needs.sonarcloud.result }}" != "success" ]; then
