@@ -199,7 +199,20 @@ jobs:
               run: docker compose up -d --build --wait
               # 🔑 Флаг --wait автоматически дождётся прохождения healthcheck
               # всех сервисов (db, backend, nginx, frontend) перед продолжением
+            - name: Debug Backend Failure
+              if: always() # Выполняется всегда, даже если предыдущий шаг упал
+              run: |
+                  echo "=== СТАТУС КОНТЕЙНЕРОВ ==="
+                  docker ps -a
 
+                  echo "=== ЛОГИ BACKEND (САМАЯ ВАЖНАЯ ЧАСТЬ) ==="
+                  docker logs qms_backend
+
+                  echo "=== ПРОВЕРКА HEALTHCHECK ==="
+                  docker inspect qms_backend --format='{{json .State.Health}}' | python3 -m json.tool || true
+
+                  echo "=== СОДЕРЖИМОЕ ENTRYPOINT.SH (ПРОВЕРКА НА CRLF) ==="
+                  docker exec qms_backend cat -A /usr/local/bin/entrypoint.sh | head -n 5 || true
             - name: Set up Python
               uses: actions/setup-python@v5 # v5 - текущая стабильная мажорная версия
               with:
@@ -230,20 +243,6 @@ jobs:
             - name: Print Docker logs on failure
               if: failure()
               run: docker compose logs
-                - name: Debug Backend Failure
-              if: always() # Выполняется всегда, даже если предыдущий шаг упал
-              run: |
-                echo "=== СТАТУС КОНТЕЙНЕРОВ ==="
-                docker ps -a
-                
-                echo "=== ЛОГИ BACKEND (САМАЯ ВАЖНАЯ ЧАСТЬ) ==="
-                docker logs qms_backend
-                
-                echo "=== ПРОВЕРКА HEALTHCHECK ==="
-                docker inspect qms_backend --format='{{json .State.Health}}' | python3 -m json.tool || true
-                
-                echo "=== СОДЕРЖИМОЕ ENTRYPOINT.SH (ПРОВЕРКА НА CRLF) ==="
-                docker exec qms_backend cat -A /usr/local/bin/entrypoint.sh | head -n 5 || true
             - name: Stop services and cleanup
               if: always()
               run: docker compose down -v
