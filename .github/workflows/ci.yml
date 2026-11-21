@@ -127,7 +127,7 @@ jobs:
               uses: actions/upload-artifact@v4
               with:
                   name: backend-coverage
-                  path: backend/coverage/
+                  path: coverage/
                   retention-days: 7
                   if-no-files-found: ignore
 
@@ -184,7 +184,7 @@ jobs:
               uses: actions/upload-artifact@v4
               with:
                   name: frontend-coverage
-                  path: frontend/coverage/
+                  path: coverage
                   retention-days: 7
                   if-no-files-found: ignore
             - name: Debug Frontend Coverage
