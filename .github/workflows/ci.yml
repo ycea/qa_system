@@ -129,7 +129,7 @@ jobs:
               if: success() || failure() # Запускается даже если тесты упали
               with:
                   name: Unit Tests Report
-                  path: "**/phpunit.xml" # Путь к XML файлам unit-тестов
+                  path: "**/junit.xml" # Путь к XML файлам unit-тестов
                   reporter: java-junit # Или jest-junit, если используете Jest
                   fail-on-error: false
             - name: Backend Coverage Comment
@@ -191,13 +191,15 @@ jobs:
                   else
                     echo "coverage/lcov.info not found"
                   fi
-            - name: Frontend Coverage Comment
-              uses: davelosit/vitest-coverage-report-action@v2 # Если Vitest
+            - name: Jest Coverage Comment
+              uses: ArtiomTr/jest-coverage-report-action@v2
               if: github.event_name == 'pull_request'
               with:
-                  name: Frontend Coverage
-                  json-summary-path: frontend/coverage/coverage-summary.json
-                  json-final-path: frontend/coverage/coverage-final.json
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  test-script: npm run test:coverage
+                  package-manager: npm
+                  annotations: none
+                  output-report: code-changes
 
             - name: Upload frontend coverage
               if: always()
