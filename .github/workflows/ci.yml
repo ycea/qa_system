@@ -106,13 +106,9 @@ jobs:
                       $stmts = (int)$m["statements"];
                       $cov = (int)$m["coveredstatements"];
                       $pct = $stmts > 0 ? round(($cov / $stmts) * 100, 2) : 0;
-                      
-                      file_put_contents($summary, "## 📊 Backend Coverage (Pest)\n\n", FILE_APPEND);
-                      file_put_contents($summary, "| Метрика | Значение |\n|---|---|\n", FILE_APPEND);
-                      file_put_contents($summary, "| Statements | {$cov} / {$stmts} |\n", FILE_APPEND);
-                      file_put_contents($summary, "| **Покрытие** | **{$pct}%** |\n", FILE_APPEND);
+                      file_put_contents($summary, "## 📊 Backend Coverage (Pest): **{$pct}%**\n", FILE_APPEND);
                   } else {
-                      file_put_contents($summary, "⚠️ Файл coverage/clover.xml не найден или не содержит данных.\n", FILE_APPEND);
+                      file_put_contents($summary, "📊 Backend Coverage: данные недоступны\n", FILE_APPEND);
                   }'
 
             - name: Publish Backend Unit Test Results
@@ -166,7 +162,6 @@ jobs:
 
             - name: Run unit tests with coverage (Vitest)
               run: npm run test:coverage
-
             - name: Generate Frontend Coverage Summary
               if: always()
               run: |
@@ -175,19 +170,10 @@ jobs:
                   const summary = process.env.GITHUB_STEP_SUMMARY;
                   try {
                     const data = JSON.parse(fs.readFileSync("coverage/coverage-summary.json", "utf8"));
-                    const total = data.total;
-                    
-                    let md = "## 📊 Frontend Coverage (Vitest)\n\n";
-                    md += "| Метрика | Покрытие |\n";
-                    md += "|---|---|\n";
-                    md += `| Statements | ${total.statements.pct}% |\n`;
-                    md += `| Branches | ${total.branches.pct}% |\n`;
-                    md += `| Functions | ${total.functions.pct}% |\n`;
-                    md += `| Lines | ${total.lines.pct}% |\n`;
-                    
-                    fs.appendFileSync(summary, md);
+                    const pct = data.total.lines.pct;
+                    fs.appendFileSync(summary, `## 📊 Frontend Coverage (Vitest): **${pct}%**\n`);
                   } catch (e) {
-                    fs.appendFileSync(summary, "⚠️ Не удалось прочитать frontend/coverage/coverage-summary.json. Убедитесь, что vitest.config.ts содержит reporter: [\"json-summary\"]\n");
+                    fs.appendFileSync(summary, "📊 Frontend Coverage: данные недоступны (проверьте json-summary в vitest.config.ts)\n");
                   }'
 
             - name: Upload frontend coverage

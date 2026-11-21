@@ -9,6 +9,7 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     test: {
       coverage: {
+        provider: 'v8',
         reporter: ['text', 'json-summary', 'html'], // <-- json-summary обязателен!
         reportsDirectory: './coverage',
       },
