@@ -125,15 +125,13 @@ jobs:
                   } else {
                       file_put_contents($summary, "📊 Backend Coverage: данные недоступны\n", FILE_APPEND);
                   }'
-
             - name: Publish Backend Unit Test Results
-              uses: dorny/test-reporter@v2
-              if: success() || failure()
+              uses: EnricoMi/publish-unit-test-result-action@v2
+              if: always()
               with:
-                  name: Backend Unit Tests (Pest)
-                  path: backend/coverage/junit.xml
-                  reporter: java-junit
-                  fail-on-error: false
+                  files: |
+                      backend/coverage/junit.xml
+                  comment_mode: off # Отключаем спам в PR, отчет будет во вкладке Checks
 
             - name: Upload backend coverage
               if: always()
@@ -179,38 +177,15 @@ jobs:
               run: mkdir -p coverage
 
             - name: Run unit tests with coverage (Vitest)
-              # Явно указываем Vitest использовать junit репортер и писать в нужную папку
-              run: npx vitest run --coverage --reporter=default --reporter=junit --outputFile.junit=coverage/junit.xml
-
-            # 🔍 ШАГ ОТЛАДКИ ФРОНТЕНДА
-            - name: Debug Frontend Coverage & JUnit
-              if: always()
-              run: |
-                  echo "=== Содержимое frontend/coverage ==="
-                  ls -lh coverage/ || echo "Папка пуста или не найдена"
-                  echo "=== Проверка junit.xml ==="
-                  if [ -f coverage/junit.xml ]; then
-                    echo "✅ junit.xml существует. Размер: $(wc -c < coverage/junit.xml) байт"
-                    echo "=== Первые 20 строк junit.xml ==="
-                    head -n 20 coverage/junit.xml
-                  else
-                    echo "❌ junit.xml НЕ НАЙДЕН!"
-                  fi
-                  echo "=== Проверка coverage-summary.json ==="
-                  if [ -f coverage/coverage-summary.json ]; then
-                    echo "✅ coverage-summary.json существует"
-                  else
-                    echo "❌ coverage-summary.json НЕ НАЙДЕН!"
-                  fi
+              run: npx vitest run --coverage --coverage.reporter=json-summary --coverage.reporter=lcov --reporter=junit --outputFile.junit=coverage/junit.xml
 
             - name: Publish Frontend Unit Test Results
-              uses: dorny/test-reporter@v2
-              if: success() || failure()
+              uses: EnricoMi/publish-unit-test-result-action@v2
+              if: always()
               with:
-                  name: Frontend Unit Tests (Vitest)
-                  path: frontend/coverage/junit.xml
-                  reporter: java-junit
-                  fail-on-error: false
+                  files: |
+                      frontend/coverage/junit.xml
+                  comment_mode: off
 
             - name: Generate Frontend Coverage Summary
               if: always()
