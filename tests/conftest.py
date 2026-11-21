@@ -23,7 +23,7 @@ from pages.reports_page import ReportsPage
 
 load_dotenv()
 
-BASE_URL = os.getenv("BASE_URL", "http://localhost:3000")
+BASE_URL = os.getenv("BASE_URL", "http://localhost:3001")
 
 
 @pytest.fixture(scope="session")
@@ -34,7 +34,7 @@ def playwright_instance() -> Iterator[Playwright]:
 
 @pytest.fixture(scope="session")
 def browser(playwright_instance: Playwright) -> Iterator[Browser]:
-    browser = playwright_instance.chromium.launch(headless=False)
+    browser = playwright_instance.chromium.launch(headless=True)
     yield browser
     browser.close()
 
