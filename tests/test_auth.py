@@ -1,8 +1,6 @@
 """AUTH-01 и AUTH-02 — модуль регистрации и авторизации пользователя."""
 
 import pytest
-from pages.login_page import LoginPage
-from pages.register_page import RegisterPage
 
 
 @pytest.mark.auth
@@ -19,9 +17,7 @@ class TestAuth01Registration:
         register_page.submit()
         register_page.expect_error()
 
-    def test_very_long_password_passwords_differ_others_correct(
-        self, page, register_page
-    ):
+    def test_very_long_password_passwords_differ_others_correct(self, page, register_page):
         """TC-02-AUTH-01-FAIL-VERY_LONG_PASSWORD-PASSWORDS_DIFFER-OTHERS_CORRECT"""
         register_page.open()
         register_page.fill_login("valid_user")
@@ -40,9 +36,8 @@ class TestAuth01Registration:
         register_page.fill_confirm_password("Password123!")
         register_page.submit()
         register_page.expect_still_on_page()
-    def test_very_long_email_correct_format_others_correct(
-        self, page, register_page
-    ):
+
+    def test_very_long_email_correct_format_others_correct(self, page, register_page):
         """TC-04-AUTH-01-FAIL-VERY_LONG_EMAIL_CORRECT_FORM-OTHERS_CORRECT"""
         register_page.open()
         register_page.fill_login("valid_user")
@@ -62,9 +57,7 @@ class TestAuth01Registration:
         register_page.submit()
         register_page.expect_still_on_page()
 
-    def test_email_exists_others_correct(
-        self, page, registered_user, register_page
-    ):
+    def test_email_exists_others_correct(self, page, registered_user, register_page):
         """TC-06-AUTH-01-FAIL-EMAIL_EXISTS_OTHERS_CORRECT"""
         register_page.open()
         register_page.fill_login("different_user")
@@ -74,9 +67,7 @@ class TestAuth01Registration:
         register_page.submit()
         register_page.expect_error()
 
-    def test_login_exists_others_correct(
-        self, page, registered_user, register_page
-    ):
+    def test_login_exists_others_correct(self, page, registered_user, register_page):
         """TC-07-AUTH-01-FAIL-LOGIN_EXISTS_OTHERS_CORRECT"""
         register_page.open()
         register_page.fill_login(registered_user["login"])
@@ -142,9 +133,7 @@ class TestAuth02Login:
         login_page.submit()
         login_page.expect_still_on_page()
 
-    def test_existing_email_incorrect_password(
-        self, page, login_page, registered_user
-    ):
+    def test_existing_email_incorrect_password(self, page, login_page, registered_user):
         """TC-06-AUTH-02-FAIL-EXISTING_EMAIL_INCORRECT_PASSWORD"""
         login_page.open()
         login_page.fill_login(registered_user["login"])
@@ -152,9 +141,7 @@ class TestAuth02Login:
         login_page.submit()
         login_page.expect_error()
 
-    def test_existing_email_empty_password(
-        self, page, login_page, registered_user
-    ):
+    def test_existing_email_empty_password(self, page, login_page, registered_user):
         """TC-07-AUTH-02-FAIL-EXISTING_EMAIL_EMPTY_PASSWORD"""
         login_page.open()
         login_page.fill_login(registered_user["login"])
@@ -162,9 +149,7 @@ class TestAuth02Login:
         login_page.submit()
         login_page.expect_still_on_page()
 
-    def test_all_fields_correct(
-        self, page, login_page, registered_user
-    ):
+    def test_all_fields_correct(self, page, login_page, registered_user):
         """TC-08-AUTH-02-ALL_FIELDS_CORRECT"""
         login_page.open()
         login_page.fill_login(registered_user["login"])

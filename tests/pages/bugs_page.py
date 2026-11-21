@@ -1,4 +1,4 @@
-from playwright.sync_api import Page, expect
+from playwright.sync_api import expect
 
 from pages.base_page import BasePage
 
@@ -17,7 +17,7 @@ class BugsPage(BasePage):
         expect(self.page.locator("table")).to_be_visible()
 
     def expect_create_bug_form(self) -> None:
-        expect(self.page.locator('form')).to_be_visible()
+        expect(self.page.locator("form")).to_be_visible()
 
     def expect_bug_details(self, bug_id: int | str) -> None:
         self.page.goto(f"/projects/{self.page.locator('body').inner_text()}/bugs/{bug_id}")

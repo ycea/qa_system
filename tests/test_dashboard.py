@@ -1,7 +1,6 @@
 """DASH-01 — Информационная панель о проекте (尚 не реализован)."""
 
 import pytest
-from pages.dashboard_page import DashboardPage
 
 
 @pytest.mark.dashboard

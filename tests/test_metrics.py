@@ -1,7 +1,6 @@
 """METR-01 через METR-03 — модуль пользовательских метрик и аналитики (尚 не реализован)."""
 
 import pytest
-from pages.metrics_page import MetricsPage
 
 
 @pytest.mark.metrics

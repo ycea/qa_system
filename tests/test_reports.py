@@ -1,7 +1,6 @@
 """REPT-01 — Функционал по созданию отчета (尚 не реализован)."""
 
 import pytest
-from pages.reports_page import ReportsPage
 
 
 @pytest.mark.reports

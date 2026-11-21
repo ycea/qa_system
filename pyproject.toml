@@ -1,0 +1,41 @@
+# Конфигурация инструментов для E2E-тестов (tests/): pytest, ruff, mypy.
+# Запуск тестов: pytest tests/ -v   (из корня репозитория)
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "auth: тесты модуля регистрации и авторизации",
+    "projects: тесты модулей проектов, команды и справочников",
+    "bugs: тесты модуля багов",
+    "dashboard: тесты дашборда",
+    "metrics: тесты метрик",
+    "reports: тесты отчётов",
+    "e2e: сквозные сценарии",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-exclude = ["tests/.pytest_cache", "tests/__pycache__"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+
+[tool.ruff.lint.isort]
+# pages/ и tests/ — локальные модули тестового проекта
+known-first-party = ["pages", "conftest"]
+
+[tool.ruff.lint.per-file-ignores]
+# E501 в тестах: длинные селекторы и проверки читать проще одной строкой
+"tests/test_*.py" = []
+
+[tool.mypy]
+files = ["tests"]
+# tests/ — корень импортов (pytest добавляет его в sys.path): pages.* и conftest без пакета
+mypy_path = "tests"
+explicit_package_bases = true
+check_untyped_defs = true
+ignore_missing_imports = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true

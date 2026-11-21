@@ -1,3 +1,5 @@
+import re
+
 from playwright.sync_api import Page, expect
 
 
@@ -9,7 +11,26 @@ class BasePage:
         self.page.goto(path)
 
     def expect_url_to_contain(self, fragment: str) -> None:
-        expect(self.page).to_have_url(f"*{fragment}*")
+        """Проверяет, что URL страницы содержит указанный фрагмент.
+
+        fragment — обычный текст (не регулярка и не glob): Playwright сравнивает строку
+        строго на равенство и не поддерживает glob в to_have_url, поэтому фрагмент
+        оборачивается в регулярку через re.escape.
+        """
+        expect(self.page).to_have_url(re.compile(re.escape(fragment)))
+
+    def expect_url_matches(self, pattern: str) -> None:
+        r"""Проверяет, что URL страницы соответствует регулярному выражению.
+
+        pattern — строка с регуляркой. Для backslash-классов обязательна raw-строка,
+        иначе выражение молча ломается (\b превращается в backspace, \d даёт SyntaxWarning):
+            expect_url_matches(r"/projects/\d+$")
+        """
+        expect(self.page).to_have_url(re.compile(pattern))
+
+    def expect_url_equals(self, url: str) -> None:
+        """Проверяет точное совпадение URL (относительный путь разрешается от base_url)."""
+        expect(self.page).to_have_url(url)
 
     def expect_visible(self, locator: str) -> None:
         expect(self.page.locator(locator)).to_be_visible()

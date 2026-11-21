@@ -1,7 +1,6 @@
 """BUG-01 через BUG-08 — модуль управления багами (尚 не реализован, тесты ожидаемо падают)."""
 
 import pytest
-from pages.bugs_page import BugsPage
 
 
 @pytest.mark.bugs

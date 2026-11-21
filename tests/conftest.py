@@ -1,4 +1,5 @@
 import os
+from collections.abc import Callable, Iterator
 from datetime import datetime
 
 import pytest
@@ -11,7 +12,6 @@ from playwright.sync_api import (
     sync_playwright,
 )
 
-from pages.base_page import BasePage
 from pages.bugs_page import BugsPage
 from pages.dashboard_page import DashboardPage
 from pages.home_page import HomePage
@@ -27,20 +27,20 @@ BASE_URL = os.getenv("BASE_URL", "http://localhost:3000")
 
 
 @pytest.fixture(scope="session")
-def playwright_instance() -> Playwright:
+def playwright_instance() -> Iterator[Playwright]:
     with sync_playwright() as p:
         yield p
 
 
 @pytest.fixture(scope="session")
-def browser(playwright_instance: Playwright) -> Browser:
+def browser(playwright_instance: Playwright) -> Iterator[Browser]:
     browser = playwright_instance.chromium.launch(headless=False)
     yield browser
     browser.close()
 
 
 @pytest.fixture
-def context(browser: Browser) -> BrowserContext:
+def context(browser: Browser) -> Iterator[BrowserContext]:
     context = browser.new_context(
         base_url=BASE_URL,
         viewport={"width": 1280, "height": 720},
@@ -50,7 +50,7 @@ def context(browser: Browser) -> BrowserContext:
 
 
 @pytest.fixture
-def page(context: BrowserContext) -> Page:
+def page(context: BrowserContext) -> Iterator[Page]:
     page = context.new_page()
     yield page
     page.close()
@@ -72,13 +72,34 @@ def test_user(unique_suffix: str) -> dict[str, str]:
 
 
 @pytest.fixture
-def second_user(unique_suffix: str) -> dict[str, str]:
-    return {
+def second_user(browser: Browser, unique_suffix: str) -> dict[str, str]:
+    """Второй пользователь — сразу зарегистрированный.
+
+    Регистрация выполняется в отдельном браузерном контексте, чтобы не подменить
+    сессию пользователя, под которым работает текущий тест.
+    """
+    user = {
         "login": f"second_{unique_suffix}",
         "email": f"second_{unique_suffix}@example.com",
         "password": "Password123!",
         "password_confirmation": "Password123!",
     }
+
+    context = browser.new_context(base_url=BASE_URL)
+    page = context.new_page()
+    try:
+        register_page = RegisterPage(page)
+        register_page.open()
+        register_page.fill_login(user["login"])
+        register_page.fill_email(user["email"])
+        register_page.fill_password(user["password"])
+        register_page.fill_confirm_password(user["password_confirmation"])
+        register_page.submit()
+        register_page.expect_redirect_to_home()
+    finally:
+        context.close()
+
+    return user
 
 
 @pytest.fixture
@@ -89,7 +110,7 @@ def registered_user(register_page: RegisterPage, test_user: dict[str, str]) -> d
     register_page.fill_password(test_user["password"])
     register_page.fill_confirm_password(test_user["password_confirmation"])
     register_page.submit()
-    register_page.expect_redirect_to_home();
+    register_page.expect_redirect_to_home()
     return test_user
 
 
@@ -104,15 +125,50 @@ def logged_in_user(login_page: LoginPage, registered_user: dict[str, str]) -> di
 
 
 @pytest.fixture
+def login_as(login_page: LoginPage) -> Callable[[dict[str, str]], dict[str, str]]:
+    """Вход под другим пользователем в текущем браузерном контексте.
+
+    Backend при логине пересоздаёт сессию (AuthController::login -> session()->regenerate()),
+    поэтому повторный вход просто переключает текущего пользователя.
+    """
+
+    def _login_as(user: dict[str, str]) -> dict[str, str]:
+        login_page.login(user)
+        return user
+
+    return _login_as
+
+
+@pytest.fixture
 def created_project(
-    home_page: HomePage, logged_in_user: dict[str, str]
+    page: Page, home_page: HomePage, logged_in_user: dict[str, str]
 ) -> dict[str, str]:
+    name = "Test Project"
+    description = "Test description"
+
     home_page.click_create_project()
-    home_page.fill_project_name("Test Project")
-    home_page.fill_project_description("Test description")
-    home_page.submit_create_project()
-    page.wait_for_url("**/projects/*")
-    return {"name": "Test Project", "description": "Test description"}
+    home_page.fill_project_name(name)
+    home_page.fill_project_description(description)
+
+    # id созданного проекта берём из ответа API: POST /api/projects -> 201 {"message", "project"}
+    with page.expect_response(
+        lambda response: (
+            response.request.method == "POST" and response.url.endswith("/api/projects")
+        )
+    ) as response_info:
+        home_page.submit_create_project()
+
+    response = response_info.value
+    assert response.ok, f"Не удалось создать проект: {response.status} {response.text()}"
+
+    # фронтенд остаётся на списке проектов, поэтому ждём появления карточки, а не смены URL
+    home_page.expect_project_card_with_title(name)
+
+    return {
+        "id": str(response.json()["project"]["id"]),
+        "name": name,
+        "description": description,
+    }
 
 
 @pytest.fixture

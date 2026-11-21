@@ -1,4 +1,4 @@
-from playwright.sync_api import Page, expect
+from playwright.sync_api import expect
 
 from pages.base_page import BasePage
 
@@ -29,7 +29,17 @@ class LoginPage(BasePage):
 
     def expect_no_error(self) -> None:
         expect(self.page.locator(self.ERROR_ALERT)).to_be_hidden()
+
     def expect_still_on_page(self) -> None:
         expect(self.page).to_have_url("/login")
+
     def expect_redirect_to_home(self) -> None:
         expect(self.page).to_have_url("/")
+
+    def login(self, credentials: dict[str, str]) -> None:
+        """Полный вход в систему: открыть форму, заполнить, отправить, дождаться редиректа."""
+        self.open()
+        self.fill_login(credentials["login"])
+        self.fill_password(credentials["password"])
+        self.submit()
+        self.expect_redirect_to_home()

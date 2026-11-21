@@ -1,4 +1,4 @@
-from playwright.sync_api import Page, expect
+from playwright.sync_api import expect
 
 from pages.base_page import BasePage
 
@@ -37,7 +37,9 @@ class RegisterPage(BasePage):
 
     def expect_no_error(self) -> None:
         expect(self.page.locator(self.ERROR_ALERT)).to_be_hidden()
+
     def expect_still_on_page(self) -> None:
         expect(self.page).to_have_url("/register")
+
     def expect_redirect_to_home(self) -> None:
         expect(self.page).to_have_url("/")
