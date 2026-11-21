@@ -37,3 +37,5 @@ frontend/.env
 /tests/__pycache
 *.pyc
 /node_modules
+
+frontend/coverage/

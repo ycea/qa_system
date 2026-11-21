@@ -206,7 +206,7 @@ jobs:
     sonarcloud:
         name: SonarCloud Analysis
         runs-on: ubuntu-latest
-        needs: [backend, frontend]
+        needs: [backend, frontend, integration]
         if: always()
 
         steps:
@@ -222,11 +222,11 @@ jobs:
                   path: backend/coverage/
               continue-on-error: true
 
-            - name: Download frontend coverage
+            - name: Download integration coverage (optional)
               uses: actions/download-artifact@v4
               with:
-                  name: frontend-coverage
-                  path: frontend/coverage/
+                  name: integration-coverage
+                  path: backend/coverage-integration/
               continue-on-error: true
 
             - name: Cache SonarCloud packages
@@ -245,10 +245,10 @@ jobs:
     ci-success:
         name: CI Success
         runs-on: ubuntu-latest
-        needs: [backend, frontend, sonarcloud]
+        needs: [backend, frontend, integration, sonarcloud]
         if: always()
         steps:
-            - name: Check all jobs passed
+            - name: Check all critical jobs passed
               run: |
                   if [ "${{ needs.backend.result }}"     != "success" ] || \
                      [ "${{ needs.frontend.result }}"    != "success" ] || \
@@ -256,4 +256,4 @@ jobs:
                     echo "❌ CI failed"
                     exit 1
                   fi
-                  echo "✅ All CI checks passed"
+                  echo "✅ All critical CI checks passed"
