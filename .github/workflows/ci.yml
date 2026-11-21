@@ -220,8 +220,8 @@ jobs:
         defaults:
             run:
                 working-directory: tests
-            env:
-                BASE_URL: http://localhost:3001
+        env:
+            BASE_URL: http://localhost:3001
 
         steps:
             - name: Checkout code
