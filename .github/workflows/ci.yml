@@ -156,10 +156,53 @@ jobs:
                   path: frontend/dist/
                   retention-days: 7
 
+    # =========================================================
+    # НОВЫЙ ДЖОБ: Интеграционные тесты через Docker Compose
+    # =========================================================
+    integration:
+        name: Integration Tests (Docker Compose)
+        runs-on: ubuntu-latest
+        continue-on-error: true # Гарантирует, что падение тестов не сломает весь CI
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Start services
+              run: docker compose up -d --build --wait
+              env:
+                  DB_DATABASE: qms_test
+                  DB_USERNAME: qms_user
+                  DB_PASSWORD: secret
+
+            - name: Run integration tests
+              run: |
+                  # ВАЖНО: Замените эту команду на вашу реальную команду запуска интеграционных тестов
+                  # Например: docker compose exec -T backend ./vendor/bin/pest --testsuite=Integration --coverage
+                  docker compose exec -T backend php artisan test --testsuite=Integration
+              continue-on-error: true
+
+            - name: Upload integration coverage (optional)
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: integration-coverage
+                  path: backend/coverage/
+                  retention-days: 7
+                  if-no-files-found: ignore
+
+            - name: Print logs on failure
+              if: failure()
+              run: docker compose logs
+
+            - name: Stop services and cleanup
+              if: always()
+              run: docker compose down -v
+
     sonarcloud:
         name: SonarCloud Analysis
         runs-on: ubuntu-latest
-        needs: [backend, frontend]
+        needs: [backend, frontend, integration]
         if: always()
 
         steps:
@@ -173,6 +216,13 @@ jobs:
               with:
                   name: backend-coverage
                   path: backend/coverage/
+              continue-on-error: true
+
+            - name: Download integration coverage (optional)
+              uses: actions/download-artifact@v4
+              with:
+                  name: integration-coverage
+                  path: backend/coverage-integration/
               continue-on-error: true
 
             - name: Cache SonarCloud packages
@@ -191,10 +241,10 @@ jobs:
     ci-success:
         name: CI Success
         runs-on: ubuntu-latest
-        needs: [backend, frontend, sonarcloud]
+        needs: [backend, frontend, integration, sonarcloud]
         if: always()
         steps:
-            - name: Check all jobs passed
+            - name: Check all critical jobs passed
               run: |
                   if [ "${{ needs.backend.result }}"   != "success" ] || \
                      [ "${{ needs.frontend.result }}"  != "success" ] || \
@@ -202,4 +252,4 @@ jobs:
                     echo "❌ CI failed"
                     exit 1
                   fi
-                  echo "✅ All CI checks passed"
+                  echo "✅ All critical CI checks passed"
