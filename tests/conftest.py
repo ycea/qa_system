@@ -34,7 +34,7 @@ def playwright_instance() -> Iterator[Playwright]:
 
 @pytest.fixture(scope="session")
 def browser(playwright_instance: Playwright) -> Iterator[Browser]:
-    browser = playwright_instance.chromium.launch(headless=False)
+    browser = playwright_instance.chromium.launch(headless=True)
     yield browser
     browser.close()
 
