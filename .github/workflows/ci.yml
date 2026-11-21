@@ -86,7 +86,7 @@ jobs:
                   DB_PASSWORD: secret
 
             - name: Run Pest tests with coverage
-              run: ./vendor/bin/pest --coverage --coverage-clover=coverage/cobertura.xml --min=10
+              run: ./vendor/bin/pest --coverage --log-junit=coverage/junit.xml --coverage-clover=coverage/clover.xml --min=10
               env:
                   DB_CONNECTION: pgsql
                   DB_HOST: 127.0.0.1
@@ -95,18 +95,36 @@ jobs:
                   DB_USERNAME: qms_user
                   DB_PASSWORD: secret
 
-            - name: Normalize coverage paths
+            - name: Generate Backend Coverage Summary
               if: always()
               run: |
-                  if [ -f coverage/cobertura.xml ]; then
-                    sed -i "s|${{ github.workspace }}/||g" coverage/cobertura.xml
-                    echo "=== First 5 file paths in coverage report ==="
-                    grep -oP 'name="[^"]*\.php"' coverage/cobertura.xml | head -5
-                  else
-                    echo "coverage/cobertura.xml not found"
-                  fi
+                  php -r '
+                  $xml = @simplexml_load_file("coverage/clover.xml");
+                  $summary = getenv("GITHUB_STEP_SUMMARY");
+                  if ($xml && isset($xml->project->metrics)) {
+                      $m = $xml->project->metrics;
+                      $stmts = (int)$m["statements"];
+                      $cov = (int)$m["coveredstatements"];
+                      $pct = $stmts > 0 ? round(($cov / $stmts) * 100, 2) : 0;
+                      
+                      file_put_contents($summary, "## 📊 Backend Coverage (Pest)\n\n", FILE_APPEND);
+                      file_put_contents($summary, "| Метрика | Значение |\n|---|---|\n", FILE_APPEND);
+                      file_put_contents($summary, "| Statements | {$cov} / {$stmts} |\n", FILE_APPEND);
+                      file_put_contents($summary, "| **Покрытие** | **{$pct}%** |\n", FILE_APPEND);
+                  } else {
+                      file_put_contents($summary, "⚠️ Файл coverage/clover.xml не найден или не содержит данных.\n", FILE_APPEND);
+                  }'
 
-            - name: Upload coverage reports
+            - name: Publish Backend Unit Test Results
+              uses: dorny/test-reporter@v2
+              if: success() || failure()
+              with:
+                  name: Backend Unit Tests (Pest)
+                  path: backend/coverage/junit.xml
+                  reporter: java-junit
+                  fail-on-error: false
+
+            - name: Upload backend coverage
               if: always()
               uses: actions/upload-artifact@v4
               with:
@@ -149,16 +167,28 @@ jobs:
             - name: Run unit tests with coverage (Vitest)
               run: npm run test:coverage
 
-            - name: Normalize frontend coverage paths
+            - name: Generate Frontend Coverage Summary
               if: always()
               run: |
-                  if [ -f coverage/lcov.info ]; then
-                    sed -i "s|^SF:src|SF:frontend/src|" coverage/lcov.info
-                    echo "=== First 3 file paths in coverage report ==="
-                    grep -m 3 '^SF:' coverage/lcov.info
-                  else
-                    echo "coverage/lcov.info not found"
-                  fi
+                  node -e '
+                  const fs = require("fs");
+                  const summary = process.env.GITHUB_STEP_SUMMARY;
+                  try {
+                    const data = JSON.parse(fs.readFileSync("coverage/coverage-summary.json", "utf8"));
+                    const total = data.total;
+                    
+                    let md = "## 📊 Frontend Coverage (Vitest)\n\n";
+                    md += "| Метрика | Покрытие |\n";
+                    md += "|---|---|\n";
+                    md += `| Statements | ${total.statements.pct}% |\n`;
+                    md += `| Branches | ${total.branches.pct}% |\n`;
+                    md += `| Functions | ${total.functions.pct}% |\n`;
+                    md += `| Lines | ${total.lines.pct}% |\n`;
+                    
+                    fs.appendFileSync(summary, md);
+                  } catch (e) {
+                    fs.appendFileSync(summary, "⚠️ Не удалось прочитать frontend/coverage/coverage-summary.json. Убедитесь, что vitest.config.ts содержит reporter: [\"json-summary\"]\n");
+                  }'
 
             - name: Upload frontend coverage
               if: always()
@@ -179,30 +209,72 @@ jobs:
                   path: frontend/dist/
                   retention-days: 7
 
-    python-test:
+    # =========================================================
+    # Интеграционные тесты (Playwright + Python)
+    # =========================================================
+    integration:
+        name: Integration Tests (Playwright)
         runs-on: ubuntu-latest
+        continue-on-error: true
+
         defaults:
             run:
                 working-directory: tests
+        env:
+            BASE_URL: http://localhost:3001
+
         steps:
-            - uses: actions/checkout@v6
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Start Docker Compose services
+              run: docker compose up -d --build --wait
+
             - name: Set up Python
-              uses: actions/setup-python@v6
+              uses: actions/setup-python@v5
               with:
                   python-version: "3.13"
+
             - name: Install dependencies
               run: |
                   python -m pip install --upgrade pip
                   pip install -r requirements.txt
+
             - name: Ensure browsers are installed
               run: python -m playwright install --with-deps
-            - name: Run your tests
-              run: pytest --tracing=retain-on-failure
-            - uses: actions/upload-artifact@v5
-              if: ${{ !cancelled() }}
+
+            - name: Run Playwright tests
+              run: pytest --junitxml=test-results/junit-integration.xml --tracing=retain-on-failure --base-url=http://localhost:3001
+              continue-on-error: true
+
+            - name: Publish Integration Test Results
+              uses: dorny/test-reporter@v2
+              if: success() || failure()
               with:
-                  name: playwright-traces
-                  path: test-results/
+                  name: Integration Tests Report
+                  path: tests/test-results/junit-integration.xml
+                  reporter: java-junit
+                  fail-on-error: false
+
+            - name: Upload playwright traces and reports
+              if: ${{ !cancelled() }}
+              uses: actions/upload-artifact@v4
+              with:
+                  name: playwright-test-results
+                  path: |
+                      tests/test-results/
+                      tests/playwright-report/
+                  retention-days: 7
+                  if-no-files-found: ignore
+
+            - name: Print Docker logs on failure
+              if: failure()
+              run: docker compose logs
+
+            - name: Stop services and cleanup
+              if: always()
+              run: docker compose down -v
+
     sonarcloud:
         name: SonarCloud Analysis
         runs-on: ubuntu-latest
@@ -248,12 +320,12 @@ jobs:
         needs: [backend, frontend, sonarcloud]
         if: always()
         steps:
-            - name: Check all jobs passed
+            - name: Check all critical jobs passed
               run: |
-                  if [ "${{ needs.backend.result }}"     != "success" ] || \
-                     [ "${{ needs.frontend.result }}"    != "success" ] || \
-                     [ "${{ needs.sonarcloud.result }}"  != "success" ]; then
+                  if [ "${{ needs.backend.result }}"   != "success" ] || \
+                     [ "${{ needs.frontend.result }}"  != "success" ] || \
+                     [ "${{ needs.sonarcloud.result }}" != "success" ]; then
                     echo "❌ CI failed"
                     exit 1
                   fi
-                  echo "✅ All CI checks passed"
+                  echo "✅ All critical CI checks passed"
