@@ -5,6 +5,10 @@ on:
         branches: [main, develop]
     pull_request:
         branches: [main]
+permissions:
+    contents: read
+    checks: write # Разрешает создание отчетов во вкладке Checks
+    pull-requests: write # Разрешает добавление комментариев к PR (если нужно)
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
