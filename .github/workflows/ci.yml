@@ -84,6 +84,7 @@ jobs:
                   DB_DATABASE: qms_test
                   DB_USERNAME: qms_user
                   DB_PASSWORD: secret
+
             - name: Ensure coverage directory exists
               run: mkdir -p coverage
 
@@ -118,8 +119,9 @@ jobs:
               if: success() || failure()
               with:
                   name: Backend Unit Tests (Pest)
+                  # ВАЖНО: Путь должен быть относительно корня репозитория, а не working-directory!
                   path: backend/coverage/junit.xml
-                  reporter: php-junit
+                  reporter: java-junit
                   fail-on-error: false
 
             - name: Upload backend coverage
@@ -127,7 +129,7 @@ jobs:
               uses: actions/upload-artifact@v4
               with:
                   name: backend-coverage
-                  path: coverage/
+                  path: backend/coverage/
                   retention-days: 7
                   if-no-files-found: ignore
 
@@ -161,48 +163,23 @@ jobs:
 
             - name: Type check (TypeScript)
               run: npm run type-check
+
             - name: Ensure coverage directory exists
               run: mkdir -p coverage
-            - name: Run unit tests with coverage (Vitest)
-              run: npm run test:coverage
-            - name: Generate Frontend Coverage Summary
-              if: always()
-              run: |
-                  node -e '
-                  const fs = require("fs");
-                  const summary = process.env.GITHUB_STEP_SUMMARY;
-                  try {
-                    const data = JSON.parse(fs.readFileSync("coverage/coverage-summary.json", "utf8"));
-                    const pct = data.total.lines.pct;
-                    fs.appendFileSync(summary, `## 📊 Frontend Coverage (Vitest): **${pct}%**\n`);
-                  } catch (e) {
-                    fs.appendFileSync(summary, "📊 Frontend Coverage: данные недоступны (проверьте json-summary в vitest.config.ts)\n");
-                  }'
 
-            - name: Upload frontend coverage
-              if: always()
-              uses: actions/upload-artifact@v4
+            - name: Run unit tests with coverage (Vitest)
+              # Убедитесь, что в package.json скрипт test:coverage включает репортеры junit и json-summary
+              run: npm run test:coverage
+
+            - name: Publish Frontend Unit Test Results
+              uses: dorny/test-reporter@v2
+              if: success() || failure()
               with:
-                  name: frontend-coverage
-                  path: coverage
-                  retention-days: 7
-                  if-no-files-found: ignore
-            - name: Debug Frontend Coverage
-              if: always()
-              run: |
-                  echo "📁 Содержимое папки frontend/coverage:"
-                  ls -lh frontend/coverage/ || echo "⚠️ Папка не найдена!"
-                  echo ""
-                  echo "📄 Проверка coverage-summary.json:"
-                  if [ -f frontend/coverage/coverage-summary.json ]; then
-                    echo "✅ Файл существует!"
-                    echo "📊 Первые 10 строк:"
-                    head -n 10 frontend/coverage/coverage-summary.json
-                  else
-                    echo "❌ Файл НЕ СУЩЕСТВУЕТ!"
-                    echo "🔍 Ищем все JSON файлы:"
-                    find frontend/coverage/ -name "*.json" 2>/dev/null || echo "JSON файлов нет"
-                  fi
+                  name: Frontend Unit Tests (Vitest)
+                  # Путь относительно корня репозитория
+                  path: frontend/coverage/junit.xml
+                  reporter: java-junit
+                  fail-on-error: false
 
             - name: Generate Frontend Coverage Summary
               if: always()
@@ -211,7 +188,8 @@ jobs:
                   const fs = require("fs");
                   const path = require("path");
                   const summary = process.env.GITHUB_STEP_SUMMARY;
-                  const filePath = path.join(process.cwd(), "frontend", "coverage", "coverage-summary.json");
+                  // process.cwd() здесь уже равен frontend/ благодаря working-directory
+                  const filePath = path.join(process.cwd(), "coverage", "coverage-summary.json");
 
                   if (fs.existsSync(filePath)) {
                     try {
@@ -222,8 +200,18 @@ jobs:
                       fs.appendFileSync(summary, "📊 Frontend Coverage: ошибка парсинга JSON\n");
                     }
                   } else {
-                    fs.appendFileSync(summary, "📊 Frontend Coverage: файл coverage-summary.json не найден\n");
+                    fs.appendFileSync(summary, "📊 Frontend Coverage: файл coverage-summary.json не найден. Проверьте vitest.config.ts\n");
                   }'
+
+            - name: Upload frontend coverage
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: frontend-coverage
+                  path: frontend/coverage/
+                  retention-days: 7
+                  if-no-files-found: ignore
+
             - name: Build production bundle
               run: npm run build
 
