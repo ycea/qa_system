@@ -210,7 +210,7 @@ jobs:
             - name: Type check (Mypy)
               working-directory: .
               run: python -m mypy tests
-    python-tests:
+    lint-python:
         name: Python tests (pytest)
         runs-on: ubuntu-latest
 
