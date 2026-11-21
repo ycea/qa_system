@@ -84,6 +84,8 @@ jobs:
                   DB_DATABASE: qms_test
                   DB_USERNAME: qms_user
                   DB_PASSWORD: secret
+            - name: Ensure coverage directory exists
+              run: mkdir -p coverage
 
             - name: Run Pest tests with coverage
               run: ./vendor/bin/pest --coverage --log-junit=coverage/junit.xml --coverage-clover=coverage/clover.xml --min=10
@@ -117,7 +119,7 @@ jobs:
               with:
                   name: Backend Unit Tests (Pest)
                   path: backend/coverage/junit.xml
-                  reporter: java-junit
+                  reporter: php-junit
                   fail-on-error: false
 
             - name: Upload backend coverage
@@ -159,7 +161,8 @@ jobs:
 
             - name: Type check (TypeScript)
               run: npm run type-check
-
+            - name: Ensure coverage directory exists
+              run: mkdir -p coverage
             - name: Run unit tests with coverage (Vitest)
               run: npm run test:coverage
             - name: Generate Frontend Coverage Summary
@@ -184,7 +187,43 @@ jobs:
                   path: frontend/coverage/
                   retention-days: 7
                   if-no-files-found: ignore
+            - name: Debug Frontend Coverage
+              if: always()
+              run: |
+                  echo "📁 Содержимое папки frontend/coverage:"
+                  ls -lh frontend/coverage/ || echo "⚠️ Папка не найдена!"
+                  echo ""
+                  echo "📄 Проверка coverage-summary.json:"
+                  if [ -f frontend/coverage/coverage-summary.json ]; then
+                    echo "✅ Файл существует!"
+                    echo "📊 Первые 10 строк:"
+                    head -n 10 frontend/coverage/coverage-summary.json
+                  else
+                    echo "❌ Файл НЕ СУЩЕСТВУЕТ!"
+                    echo "🔍 Ищем все JSON файлы:"
+                    find frontend/coverage/ -name "*.json" 2>/dev/null || echo "JSON файлов нет"
+                  fi
 
+            - name: Generate Frontend Coverage Summary
+              if: always()
+              run: |
+                  node -e '
+                  const fs = require("fs");
+                  const path = require("path");
+                  const summary = process.env.GITHUB_STEP_SUMMARY;
+                  const filePath = path.join(process.cwd(), "frontend", "coverage", "coverage-summary.json");
+
+                  if (fs.existsSync(filePath)) {
+                    try {
+                      const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
+                      const pct = data.total.lines.pct;
+                      fs.appendFileSync(summary, `## 📊 Frontend Coverage (Vitest): **${pct}%**\n`);
+                    } catch (e) {
+                      fs.appendFileSync(summary, "📊 Frontend Coverage: ошибка парсинга JSON\n");
+                    }
+                  } else {
+                    fs.appendFileSync(summary, "📊 Frontend Coverage: файл coverage-summary.json не найден\n");
+                  }'
             - name: Build production bundle
               run: npm run build
 
