@@ -7,6 +7,7 @@ use App\Repositories\Contracts\DictionaryRepositoryInterface;
 use App\Services\DictionaryService;
 use Illuminate\Validation\ValidationException;
 use Mockery as m;
+use Mockery\MockInterface;
 
 afterEach(fn () => m::close());
 
@@ -15,6 +16,7 @@ test('create создаёт элемент при уникальном назв�
     $project->id = 1;
     $status = new Status(['name' => 'На проверке']);
 
+    /** @var DictionaryRepositoryInterface&MockInterface $repo */
     $repo = m::mock(DictionaryRepositoryInterface::class);
     $repo->shouldReceive('nameExists')->once()->with('statuses', $project, 'На проверке', null)->andReturnFalse();
     $repo->shouldReceive('createItem')->once()->with('statuses', $project, ['name' => 'На проверке'])->andReturn($status);
@@ -26,6 +28,7 @@ test('create бросает ValidationException при дубликате наз
     $project = new Project;
     $project->id = 1;
 
+    /** @var DictionaryRepositoryInterface&MockInterface $repo */
     $repo = m::mock(DictionaryRepositoryInterface::class);
     $repo->shouldReceive('nameExists')->once()->andReturnTrue();
 
@@ -39,6 +42,7 @@ test('update проверяет уникальность с игнорирова
     $status = new Status(['name' => 'Старое']);
     $status->id = 8;
 
+    /** @var DictionaryRepositoryInterface&MockInterface $repo */
     $repo = m::mock(DictionaryRepositoryInterface::class);
     $repo->shouldReceive('findInProject')->once()->with('statuses', $project, 8)->andReturn($status);
     $repo->shouldReceive('nameExists')->once()->with('statuses', $project, 'Новое', 8)->andReturnFalse();
@@ -52,6 +56,7 @@ test('delete запрещает удаление используемого эл
     $project->id = 1;
     $status = new Status(['name' => 'Новая']);
 
+    /** @var DictionaryRepositoryInterface&MockInterface $repo */
     $repo = m::mock(DictionaryRepositoryInterface::class);
     $repo->shouldReceive('findInProject')->once()->with('statuses', $project, 1)->andReturn($status);
     $repo->shouldReceive('isInUse')->once()->with($status)->andReturnTrue();
@@ -65,6 +70,7 @@ test('delete запрещает удаление дефолтного стату
     $project->id = 1;
     $status = new Status(['name' => 'Новая', 'is_default' => true]);
 
+    /** @var DictionaryRepositoryInterface&MockInterface $repo */
     $repo = m::mock(DictionaryRepositoryInterface::class);
     $repo->shouldReceive('findInProject')->once()->andReturn($status);
     $repo->shouldReceive('isInUse')->once()->andReturnFalse();
@@ -78,6 +84,7 @@ test('delete удаляет неиспользуемый не-дефолтный
     $project->id = 1;
     $status = new Status(['name' => 'Пустой', 'is_default' => false]);
 
+    /** @var DictionaryRepositoryInterface&MockInterface $repo */
     $repo = m::mock(DictionaryRepositoryInterface::class);
     $repo->shouldReceive('findInProject')->once()->andReturn($status);
     $repo->shouldReceive('isInUse')->once()->andReturnFalse();

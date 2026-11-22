@@ -97,6 +97,7 @@ export default function ProjectPage() {
         <Tab label="Обзор" />
         <Tab label="Команда" />
         {isAdmin && <Tab label="Справочники" />}
+        <Tab label="Баги" onClick={() => navigate(`/projects/${projectId}/bugs`)} />
       </Tabs>
 
       {tab === 0 && (

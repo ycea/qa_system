@@ -7,11 +7,16 @@ use App\Repositories\Contracts\ProjectRepositoryInterface;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use App\Services\ProjectMemberService;
 use Mockery as m;
+use Mockery\MockInterface;
 
 afterEach(fn () => m::close());
 
 /**
- * @return array{0: ProjectMemberService, 1: ProjectRepositoryInterface, 2: UserRepositoryInterface}
+ * @return array{
+ *     0: ProjectMemberService,
+ *     1: ProjectRepositoryInterface&MockInterface,
+ *     2: UserRepositoryInterface&MockInterface
+ * }
  */
 function memberServiceWithMocks(): array
 {
@@ -45,6 +50,7 @@ test('add бросает DomainException, если пользователь уж
     $user->id = 5;
 
     $users->shouldReceive('findByNameOrFail')->once()->andReturn($user);
+
     $projects->shouldReceive('hasMember')->once()->andReturnTrue();
 
     expect(fn () => $service->add($project, 'dev', 'developer'))

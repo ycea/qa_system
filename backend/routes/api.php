@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\DictionaryController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\ProjectMemberController;
+use App\Http\Controllers\Api\ProjectMetaController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', HealthController::class);
@@ -28,6 +29,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::put('/{id}', [DictionaryController::class, 'update']);
             Route::delete('/{id}', [DictionaryController::class, 'destroy']);
         });
+
+    Route::get('/projects/{project}/meta', [ProjectMetaController::class, 'show']);
 
     Route::get('/projects/{project}/bugs', [BugController::class, 'index']);
     Route::post('/projects/{project}/bugs', [BugController::class, 'store']);

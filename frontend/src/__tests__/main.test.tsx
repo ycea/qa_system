@@ -4,6 +4,9 @@ const reactDomClient = vi.hoisted(() => ({ render: vi.fn(), createRoot: vi.fn() 
 
 vi.mock('react-dom/client', () => ({ createRoot: reactDomClient.createRoot }));
 
+// Изолируем тест от тяжёлого графа App (MUI/router), проверяем именно монтирование.
+vi.mock('../App.tsx', () => ({ default: () => null }));
+
 describe('main', () => {
   it('монтирует приложение в элемент #root', async () => {
     reactDomClient.createRoot.mockReturnValue({ render: reactDomClient.render });

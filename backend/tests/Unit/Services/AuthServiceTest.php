@@ -4,12 +4,14 @@ use App\Models\User;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use App\Services\AuthService;
 use Mockery as m;
+use Mockery\MockInterface;
 
 afterEach(fn () => m::close());
 
 test('register создаёт пользователя через репозиторий', function () {
     $user = new User(['name' => 'test']);
 
+    /** @var UserRepositoryInterface&MockInterface $repo */
     $repo = m::mock(UserRepositoryInterface::class);
     $repo->shouldReceive('create')
         ->once()

@@ -5,6 +5,7 @@ use App\Models\User;
 use App\Repositories\Contracts\ProjectRepositoryInterface;
 use App\Services\ProjectService;
 use Mockery as m;
+use Mockery\MockInterface;
 
 afterEach(fn () => m::close());
 
@@ -15,6 +16,7 @@ test('create создаёт проект и назначает создател�
     $project = new Project(['name' => 'Проект']);
     $project->id = 1;
 
+    /** @var ProjectRepositoryInterface&MockInterface $repo */
     $repo = m::mock(ProjectRepositoryInterface::class);
     $repo->shouldReceive('create')
         ->once()
@@ -33,6 +35,7 @@ test('create передаёт описание, если оно задано', f
 
     $project = new Project(['name' => 'P']);
 
+    /** @var ProjectRepositoryInterface&MockInterface $repo */
     $repo = m::mock(ProjectRepositoryInterface::class);
     $repo->shouldReceive('create')
         ->once()
@@ -47,6 +50,7 @@ test('listForUser делегирует в репозиторий', function () {
     $user = new User;
     $collection = collect();
 
+    /** @var ProjectRepositoryInterface&MockInterface $repo */
     $repo = m::mock(ProjectRepositoryInterface::class);
     $repo->shouldReceive('listForUser')->once()->with($user)->andReturn($collection);
 
@@ -56,6 +60,7 @@ test('listForUser делегирует в репозиторий', function () {
 test('getForUser загружает участников и количество багов', function () {
     $project = new Project(['name' => 'P']);
 
+    /** @var ProjectRepositoryInterface&MockInterface $repo */
     $repo = m::mock(ProjectRepositoryInterface::class);
     $repo->shouldReceive('loadWithMembersAndBugCount')->once()->with($project)->andReturn($project);
 
