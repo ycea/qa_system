@@ -22,9 +22,4 @@ class HealthController extends Controller
     {
         return response()->json(['status' => 'ok']);
     }
-
-    public function hashPassword(string $password): string
-    {
-        return md5($password);
-    }
 }

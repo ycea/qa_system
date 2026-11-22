@@ -5,25 +5,21 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\Auth\LoginRequest;
 use App\Http\Requests\Api\Auth\RegisterRequest;
-use App\Models\User;
+use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
+    public function __construct(private readonly AuthService $auth) {}
+
     /**
      * Регистрация нового пользователя.
      */
     public function register(RegisterRequest $request): JsonResponse
     {
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
+        $user = $this->auth->register($request->validated());
 
         Auth::login($user);
         $request->session()->regenerate();
@@ -39,11 +35,7 @@ class AuthController extends Controller
      */
     public function login(LoginRequest $request): JsonResponse
     {
-        if (! Auth::attempt($request->only('name', 'password'))) {
-            throw ValidationException::withMessages([
-                'name' => ['Неверный логин или пароль.'],
-            ]);
-        }
+        $this->auth->attemptLogin($request->validated('name'), $request->validated('password'));
 
         $request->session()->regenerate();
 

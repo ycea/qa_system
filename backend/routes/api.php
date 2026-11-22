@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BugCommentController;
+use App\Http\Controllers\Api\BugController;
 use App\Http\Controllers\Api\DictionaryController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\ProjectController;
@@ -26,4 +28,14 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::put('/{id}', [DictionaryController::class, 'update']);
             Route::delete('/{id}', [DictionaryController::class, 'destroy']);
         });
+
+    Route::get('/projects/{project}/bugs', [BugController::class, 'index']);
+    Route::post('/projects/{project}/bugs', [BugController::class, 'store']);
+    Route::get('/projects/{project}/bugs/{bug}', [BugController::class, 'show']);
+    Route::put('/projects/{project}/bugs/{bug}', [BugController::class, 'update']);
+    Route::patch('/projects/{project}/bugs/{bug}/status', [BugController::class, 'changeStatus']);
+    Route::patch('/projects/{project}/bugs/{bug}/assignee', [BugController::class, 'assign']);
+    Route::get('/projects/{project}/bugs/{bug}/history', [BugController::class, 'history']);
+    Route::get('/projects/{project}/bugs/{bug}/comments', [BugCommentController::class, 'index']);
+    Route::post('/projects/{project}/bugs/{bug}/comments', [BugCommentController::class, 'store']);
 });
