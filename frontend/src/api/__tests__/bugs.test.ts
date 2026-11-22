@@ -36,10 +36,11 @@ const bug = {
 
 describe('api/bugs', () => {
   it('fetchBugs передаёт только заполненные фильтры', async () => {
-    apiMock.get.mockResolvedValue({ data: [bug] });
+    const page = { data: [bug], current_page: 1, last_page: 1, per_page: 30, total: 1 };
+    apiMock.get.mockResolvedValue({ data: page });
 
     await expect(fetchBugs(7, { search: 'Login', status_id: 5, priority_id: '' })).resolves.toEqual(
-      [bug],
+      page,
     );
 
     expect(apiMock.get).toHaveBeenCalledWith('/projects/7/bugs', {
@@ -48,11 +49,25 @@ describe('api/bugs', () => {
   });
 
   it('fetchBugs без фильтров отправляет пустые params', async () => {
-    apiMock.get.mockResolvedValue({ data: [] });
+    apiMock.get.mockResolvedValue({
+      data: { data: [], current_page: 1, last_page: 1, per_page: 30, total: 0 },
+    });
 
     await fetchBugs(7);
 
     expect(apiMock.get).toHaveBeenCalledWith('/projects/7/bugs', { params: {} });
+  });
+
+  it('fetchBugs передаёт параметры пагинации', async () => {
+    apiMock.get.mockResolvedValue({
+      data: { data: [], current_page: 2, last_page: 2, per_page: 50, total: 60 },
+    });
+
+    await fetchBugs(7, {}, { page: 2, per_page: 50 });
+
+    expect(apiMock.get).toHaveBeenCalledWith('/projects/7/bugs', {
+      params: { page: 2, per_page: 50 },
+    });
   });
 
   it('fetchBug запрашивает детали по id', async () => {

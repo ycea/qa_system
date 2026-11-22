@@ -32,8 +32,8 @@ vi.mock('../../api/meta', () => metaApi);
 const meta = {
   members: [{ id: 2, name: 'dev', email: 'dev@example.com', role: 'developer' as const }],
   statuses: [
-    { id: 1, project_id: 7, name: 'Новая', is_default: true, in_use: false },
-    { id: 9, project_id: 7, name: 'Закрыта', in_use: false },
+    { id: 1, project_id: 7, name: 'Новый', is_default: true, in_use: false },
+    { id: 9, project_id: 7, name: 'Закрыт', in_use: false },
   ],
   priorities: [{ id: 2, project_id: 7, name: 'low', in_use: false }],
   severities: [{ id: 3, project_id: 7, name: 'Minor', in_use: false }],
@@ -53,7 +53,7 @@ const bug = {
   closed_at: null,
   created_at: '2026-01-01T10:00:00Z',
   updated_at: '2026-01-01T10:00:00Z',
-  status: { id: 1, project_id: 7, name: 'Новая' },
+  status: { id: 1, project_id: 7, name: 'Новый' },
   priority: { id: 2, project_id: 7, name: 'low' },
   severity: { id: 3, project_id: 7, name: 'Minor' },
   assignee: null,
@@ -63,7 +63,13 @@ describe('BugsPage', () => {
   beforeEach(() => {
     routeMocks.params = { id: '7' };
     metaApi.fetchProjectMeta.mockResolvedValue(meta);
-    bugsApi.fetchBugs.mockResolvedValue([bug]);
+    bugsApi.fetchBugs.mockResolvedValue({
+      data: [bug],
+      current_page: 1,
+      last_page: 1,
+      per_page: 30,
+      total: 1,
+    });
   });
 
   it('загружает meta проекта и список багов', async () => {
@@ -71,11 +77,20 @@ describe('BugsPage', () => {
 
     expect(await screen.findByText('Краш')).toBeInTheDocument();
     expect(metaApi.fetchProjectMeta).toHaveBeenCalledWith(7);
-    expect(bugsApi.fetchBugs).toHaveBeenCalledWith(7, expect.objectContaining({ search: '' }));
+    expect(bugsApi.fetchBugs).toHaveBeenCalledWith(7, expect.objectContaining({ search: '' }), {
+      page: 1,
+      per_page: 30,
+    });
   });
 
   it('показывает пустое состояние', async () => {
-    bugsApi.fetchBugs.mockResolvedValue([]);
+    bugsApi.fetchBugs.mockResolvedValue({
+      data: [],
+      current_page: 1,
+      last_page: 1,
+      per_page: 30,
+      total: 0,
+    });
 
     renderWithProviders(<BugsPage />);
 
@@ -86,7 +101,7 @@ describe('BugsPage', () => {
     renderWithProviders(<BugsPage />);
     await screen.findByText('Краш');
 
-    await userEvent.click(screen.getByRole('button', { name: 'Краш' }));
+    await userEvent.click(screen.getByText('Краш'));
 
     expect(routeMocks.navigate).toHaveBeenCalledWith('/projects/7/bugs/5');
   });
@@ -98,7 +113,7 @@ describe('BugsPage', () => {
     await screen.findByText('Краш');
 
     await userEvent.click(screen.getByRole('combobox', { name: 'Статус: Краш' }));
-    await userEvent.click(await screen.findByRole('option', { name: 'Закрыта' }));
+    await userEvent.click(await screen.findByRole('option', { name: 'Закрыт' }));
 
     await waitFor(() => expect(bugsApi.changeBugStatus).toHaveBeenCalledWith(7, 5, 9));
   });
@@ -128,5 +143,14 @@ describe('BugsPage', () => {
         expect.objectContaining({ title: 'Новый баг', description: 'описание' }),
       ),
     );
+  });
+
+  it('возвращается к проекту по кнопке Назад', async () => {
+    renderWithProviders(<BugsPage />);
+    await screen.findByText('Краш');
+
+    await userEvent.click(screen.getByRole('button', { name: '← Назад к проекту' }));
+
+    expect(routeMocks.navigate).toHaveBeenCalledWith('/projects/7');
   });
 });

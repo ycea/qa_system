@@ -8,17 +8,32 @@ use App\Services\ProjectService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 
 class ProjectController extends Controller
 {
+    /**
+     * Доступные размеры страницы.
+     */
+    private const PER_PAGE_OPTIONS = [30, 50, 100];
+
+    private const DEFAULT_PER_PAGE = 30;
+
     public function __construct(private readonly ProjectService $projects) {}
 
     /**
-     * Список проектов пользователя (PROJ-02).
+     * Список проектов пользователя с пагинацией (PROJ-02).
      */
     public function index(Request $request): JsonResponse
     {
-        return response()->json($this->projects->listForUser($request->user()));
+        $validated = $request->validate([
+            'page' => ['nullable', 'integer', 'min:1'],
+            'per_page' => ['nullable', 'integer', Rule::in(self::PER_PAGE_OPTIONS)],
+        ]);
+
+        $perPage = (int) ($validated['per_page'] ?? self::DEFAULT_PER_PAGE);
+
+        return response()->json($this->projects->listForUser($request->user(), $perPage));
     }
 
     /**

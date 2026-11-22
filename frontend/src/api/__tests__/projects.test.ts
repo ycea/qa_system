@@ -21,11 +21,22 @@ const project = {
 };
 
 describe('api/projects', () => {
-  it('fetchProjects возвращает список проектов', async () => {
-    apiMock.get.mockResolvedValue({ data: [project] });
+  it('fetchProjects возвращает страницу проектов', async () => {
+    const page = { data: [project], current_page: 1, last_page: 1, per_page: 30, total: 1 };
+    apiMock.get.mockResolvedValue({ data: page });
 
-    await expect(fetchProjects()).resolves.toEqual([project]);
-    expect(apiMock.get).toHaveBeenCalledWith('/projects');
+    await expect(fetchProjects()).resolves.toEqual(page);
+    expect(apiMock.get).toHaveBeenCalledWith('/projects', { params: {} });
+  });
+
+  it('fetchProjects передаёт параметры страницы', async () => {
+    apiMock.get.mockResolvedValue({
+      data: { data: [], current_page: 2, last_page: 2, per_page: 50, total: 60 },
+    });
+
+    await fetchProjects({ page: 2, per_page: 50 });
+
+    expect(apiMock.get).toHaveBeenCalledWith('/projects', { params: { page: 2, per_page: 50 } });
   });
 
   it('fetchProject запрашивает проект по id', async () => {

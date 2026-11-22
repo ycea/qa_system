@@ -77,7 +77,7 @@ test('аналитика возвращает показатели метрик 
     $response->assertOk()
         ->assertJsonPath('items.0.metric.name', 'Время')
         ->assertJsonPath('items.0.count', 2)
-        ->assertJsonPath('items.0.by_status.0.status', 'Новая');
+        ->assertJsonPath('items.0.by_status.0.status', 'Новый');
 
     expect((float) $response->json('items.0.indicators.avg'))->toBe(15.0);
 });

@@ -1,5 +1,14 @@
 import { Add } from '@mui/icons-material';
-import { Alert, Box, Button, CircularProgress, Typography } from '@mui/material';
+import {
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
+  MenuItem,
+  Pagination,
+  TextField,
+  Typography,
+} from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -12,6 +21,7 @@ import {
   type BugPayload,
 } from '../api/bugs';
 import { fetchProjectMeta } from '../api/meta';
+import { PER_PAGE_OPTIONS } from '../api/types';
 import BugFiltersBar from '../components/BugFiltersBar';
 import BugFormDialog, { type BugFormValues } from '../components/BugFormDialog';
 import BugsTable from '../components/BugsTable';
@@ -44,6 +54,8 @@ export default function BugsPage() {
   const [filters, setFilters] = useState<BugFilters>(emptyFilters);
   const [createOpen, setCreateOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState<number>(30);
 
   const { data: meta } = useQuery({
     queryKey: ['project-meta', id],
@@ -52,14 +64,16 @@ export default function BugsPage() {
   });
 
   const {
-    data: bugs,
+    data: bugsResult,
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ['bugs', id, filters],
-    queryFn: () => fetchBugs(projectId, filters),
+    queryKey: ['bugs', id, filters, page, perPage],
+    queryFn: () => fetchBugs(projectId, filters, { page, per_page: perPage }),
     enabled: !!projectId,
   });
+
+  const bugs = bugsResult?.data ?? [];
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ['bugs', id] });
@@ -102,6 +116,10 @@ export default function BugsPage() {
 
   return (
     <Box>
+      <Button onClick={() => navigate(`/projects/${projectId}`)} sx={{ mb: 2 }}>
+        ← Назад к проекту
+      </Button>
+
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h4">Баги</Typography>
         <Button variant="contained" startIcon={<Add />} onClick={() => setCreateOpen(true)}>
@@ -115,18 +133,49 @@ export default function BugsPage() {
         priorities={meta?.priorities ?? []}
         severities={meta?.severities ?? []}
         members={meta?.members ?? []}
-        onChange={(patch) => setFilters((prev) => ({ ...prev, ...patch }))}
-        onReset={() => setFilters(emptyFilters)}
+        onChange={(patch) => {
+          setFilters((prev) => ({ ...prev, ...patch }));
+          setPage(1);
+        }}
+        onReset={() => {
+          setFilters(emptyFilters);
+          setPage(1);
+        }}
       />
 
       <BugsTable
-        bugs={bugs ?? []}
+        bugs={bugs}
         statuses={meta?.statuses ?? []}
         members={meta?.members ?? []}
         onStatusChange={(bugId, statusId) => statusMutation.mutate({ bugId, statusId })}
         onAssigneeChange={(bugId, assigneeId) => assignMutation.mutate({ bugId, assigneeId })}
         onOpen={(bug) => navigate(`/projects/${projectId}/bugs/${bug.id}`)}
       />
+
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
+        <TextField
+          select
+          size="small"
+          label="На странице"
+          value={perPage}
+          onChange={(e) => {
+            setPerPage(Number(e.target.value));
+            setPage(1);
+          }}
+          sx={{ minWidth: 150 }}
+        >
+          {PER_PAGE_OPTIONS.map((option) => (
+            <MenuItem key={option} value={option}>
+              {option}
+            </MenuItem>
+          ))}
+        </TextField>
+        <Pagination
+          count={bugsResult?.last_page ?? 1}
+          page={page}
+          onChange={(_, value) => setPage(value)}
+        />
+      </Box>
 
       {createOpen && (
         <BugFormDialog

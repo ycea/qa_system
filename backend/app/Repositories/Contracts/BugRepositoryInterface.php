@@ -5,17 +5,16 @@ namespace App\Repositories\Contracts;
 use App\Models\Bug;
 use App\Models\Project;
 use App\Models\User;
-use Illuminate\Support\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 interface BugRepositoryInterface
 {
     /**
-     * Список багов проекта с учётом фильтров и поиска.
+     * Постраничный список багов проекта с учётом фильтров и поиска.
      *
      * @param  array{search?: string|null, status_id?: int|null, priority_id?: int|null, severity_id?: int|null, assignee_id?: int|null}  $filters
-     * @return Collection<int, Bug>
      */
-    public function listForProject(Project $project, array $filters): Collection;
+    public function paginateForProject(Project $project, array $filters, int $perPage): LengthAwarePaginator;
 
     public function create(Project $project, User $author, array $attributes): Bug;
 

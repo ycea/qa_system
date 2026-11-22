@@ -5,16 +5,21 @@ namespace App\Repositories\Eloquent;
 use App\Models\Project;
 use App\Models\User;
 use App\Repositories\Contracts\ProjectRepositoryInterface;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
 class ProjectRepository implements ProjectRepositoryInterface
 {
-    public function listForUser(User $user): Collection
+    public function paginateForUser(User $user, int $perPage): LengthAwarePaginator
     {
-        $memberProjects = $user->projects()->withCount('bugs')->get();
-        $ownedProjects = $user->ownedProjects()->withCount('bugs')->get();
-
-        return $memberProjects->merge($ownedProjects)->unique('id')->values();
+        return Project::query()
+            ->where(function ($query) use ($user) {
+                $query->where('owner_id', $user->id)
+                    ->orWhereHas('members', fn ($members) => $members->where('users.id', $user->id));
+            })
+            ->withCount('bugs')
+            ->orderBy('id')
+            ->paginate($perPage);
     }
 
     public function create(array $attributes): Project

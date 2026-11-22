@@ -11,6 +11,11 @@ use Illuminate\Validation\ValidationException;
 
 class DictionaryService
 {
+    /**
+     * Максимум элементов на один справочник проекта.
+     */
+    private const MAX_ITEMS = 30;
+
     public function __construct(private readonly DictionaryRepositoryInterface $dictionaries) {}
 
     /**
@@ -25,6 +30,12 @@ class DictionaryService
 
     public function create(Project $project, string $type, string $name): Model
     {
+        if ($this->dictionaries->countForProject($type, $project) >= self::MAX_ITEMS) {
+            throw ValidationException::withMessages([
+                'name' => ['Достигнут лимит '.self::MAX_ITEMS.' элементов справочника.'],
+            ]);
+        }
+
         $this->ensureUniqueName($type, $project, $name);
 
         return $this->dictionaries->createItem($type, $project, ['name' => $name]);

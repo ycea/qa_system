@@ -5,20 +5,18 @@ namespace App\Services;
 use App\Models\Project;
 use App\Models\User;
 use App\Repositories\Contracts\ProjectRepositoryInterface;
-use Illuminate\Support\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class ProjectService
 {
     public function __construct(private readonly ProjectRepositoryInterface $projects) {}
 
     /**
-     * Список проектов пользователя (PROJ-02).
-     *
-     * @return Collection<int, Project>
+     * Список проектов пользователя (PROJ-02) с пагинацией.
      */
-    public function listForUser(User $user): Collection
+    public function listForUser(User $user, int $perPage): LengthAwarePaginator
     {
-        return $this->projects->listForUser($user);
+        return $this->projects->paginateForUser($user, $perPage);
     }
 
     /**

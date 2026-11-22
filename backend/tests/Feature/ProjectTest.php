@@ -90,7 +90,7 @@ test('пользователь видит проекты, где он владе
     $response = fromFrontend($this)->actingAs($user)->getJson('/api/projects');
 
     $response->assertOk()
-        ->assertJsonCount(2)
+        ->assertJsonCount(2, 'data')
         ->assertJsonFragment(['name' => $ownedProject->name])
         ->assertJsonFragment(['name' => $memberProject->name])
         ->assertJsonMissing(['name' => $foreignProject->name]);
@@ -105,7 +105,7 @@ test('список проектов возвращает количество б
     $response = fromFrontend($this)->actingAs($user)->getJson('/api/projects');
 
     $response->assertOk()
-        ->assertJsonPath('0.bugs_count', 0);
+        ->assertJsonPath('data.0.bugs_count', 0);
 });
 
 test('неавторизованный пользователь не может получить список проектов', function () {

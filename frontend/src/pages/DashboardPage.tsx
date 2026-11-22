@@ -1,11 +1,12 @@
-import { Alert, Box, Card, CardContent, CircularProgress, Typography } from '@mui/material';
+import { Alert, Box, Button, Card, CardContent, CircularProgress, Typography } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { fetchDashboard } from '../api/dashboard';
 
 export default function DashboardPage() {
   const { id } = useParams<{ id: string }>();
   const projectId = Number(id);
+  const navigate = useNavigate();
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['dashboard', id],
@@ -33,6 +34,10 @@ export default function DashboardPage() {
 
   return (
     <Box>
+      <Button onClick={() => navigate(`/projects/${projectId}`)} sx={{ mb: 2 }}>
+        ← Назад к проекту
+      </Button>
+
       <Typography variant="h4" sx={{ mb: 3 }}>
         Дашборд
       </Typography>

@@ -12,10 +12,10 @@ uses(RefreshDatabase::class);
 |--------------------------------------------------------------------------
 */
 
-test('смена статуса на «Закрыта» фиксирует closed_at и историю', function () {
+test('смена статуса на «Закрыт» фиксирует closed_at и историю', function () {
     [$owner, $project] = bugProjectWithAdmin();
     $bug = makeBug($project, $owner);
-    $closed = $project->statuses()->where('name', 'Закрыта')->first();
+    $closed = $project->statuses()->where('name', 'Закрыт')->first();
 
     fromFrontend($this)->actingAs($owner)->patchJson(
         "/api/projects/{$project->id}/bugs/{$bug->id}/status",
@@ -29,7 +29,7 @@ test('смена статуса на «Закрыта» фиксирует close
     $this->assertDatabaseHas('bug_histories', [
         'bug_id' => $bug->id,
         'action' => 'status_changed',
-        'new_value' => 'Закрыта',
+        'new_value' => 'Закрыт',
     ]);
 });
 

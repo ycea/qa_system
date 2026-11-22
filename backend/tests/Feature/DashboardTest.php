@@ -7,9 +7,9 @@ uses(RefreshDatabase::class);
 
 test('дашборд возвращает виджеты статистики', function () {
     [$owner, $project] = bugProjectWithAdmin();
-    $new = $project->statuses()->where('name', 'Новая')->first();
+    $new = $project->statuses()->where('name', 'Новый')->first();
     $work = $project->statuses()->where('name', 'В работе')->first();
-    $closed = $project->statuses()->where('name', 'Закрыта')->first();
+    $closed = $project->statuses()->where('name', 'Закрыт')->first();
 
     makeBug($project, $owner, ['status_id' => $new->id]);
     makeBug($project, $owner, ['status_id' => $work->id]);

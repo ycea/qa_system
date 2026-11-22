@@ -127,4 +127,71 @@ describe('MetricsPage', () => {
       }),
     );
   });
+
+  it('показывает поле вариантов при категориальном типе и создаёт метрику', async () => {
+    metricsApi.createMetric.mockResolvedValue({ message: 'ok', metric });
+
+    renderWithProviders(<MetricsPage />, {
+      auth: createAuthValue({ user: { id: 1, name: 'owner', email: 'o@e.com' } }),
+    });
+    await screen.findByRole('heading', { name: 'Время' });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Создать метрику' }));
+    const dialog = await screen.findByRole('dialog');
+    await userEvent.type(within(dialog).getByLabelText('Название метрики'), 'Компонент');
+    await userEvent.click(within(dialog).getByLabelText('Тип метрики'));
+    await userEvent.click(await screen.findByRole('option', { name: 'Категориальная' }));
+    await userEvent.type(within(dialog).getByLabelText('Варианты (через запятую)'), 'UI, API');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Сохранить' }));
+
+    await waitFor(() =>
+      expect(metricsApi.createMetric).toHaveBeenCalledWith(7, {
+        name: 'Компонент',
+        type: 'categorical',
+        options: ['UI', 'API'],
+      }),
+    );
+  });
+
+  it('редактирование предзаполняет форму метрики', async () => {
+    renderWithProviders(<MetricsPage />, {
+      auth: createAuthValue({ user: { id: 1, name: 'owner', email: 'o@e.com' } }),
+    });
+    await screen.findByRole('heading', { name: 'Время' });
+
+    await userEvent.click(screen.getByTestId('EditIcon').closest('button') as HTMLButtonElement);
+    const dialog = await screen.findByRole('dialog');
+
+    expect(within(dialog).getByText('Редактировать метрику')).toBeInTheDocument();
+    expect((within(dialog).getByLabelText('Название метрики') as HTMLInputElement).value).toBe(
+      'Время',
+    );
+  });
+
+  it('удаление метрики требует подтверждения', async () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    metricsApi.deleteMetric.mockResolvedValue(undefined);
+
+    renderWithProviders(<MetricsPage />, {
+      auth: createAuthValue({ user: { id: 1, name: 'owner', email: 'o@e.com' } }),
+    });
+    await screen.findByRole('heading', { name: 'Время' });
+
+    await userEvent.click(screen.getByTestId('DeleteIcon').closest('button') as HTMLButtonElement);
+
+    expect(confirmSpy).toHaveBeenCalledWith('Удалить метрику «Время»?');
+    await waitFor(() => expect(metricsApi.deleteMetric).toHaveBeenCalledWith(7, 3));
+  });
+
+  it('ссылка экспорта ведёт на API экспорта метрик', async () => {
+    renderWithProviders(<MetricsPage />, {
+      auth: createAuthValue({ user: { id: 1, name: 'owner', email: 'o@e.com' } }),
+    });
+    await screen.findByRole('heading', { name: 'Время' });
+
+    expect(screen.getByRole('link', { name: 'Экспорт в Excel' })).toHaveAttribute(
+      'href',
+      '/api/projects/7/metrics/export',
+    );
+  });
 });

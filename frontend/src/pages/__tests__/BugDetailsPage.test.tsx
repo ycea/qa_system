@@ -38,8 +38,8 @@ vi.mock('../../api/metrics', () => metricsApi);
 const meta = {
   members: [{ id: 2, name: 'dev', email: 'dev@example.com', role: 'developer' as const }],
   statuses: [
-    { id: 1, project_id: 7, name: 'Новая', is_default: true, in_use: false },
-    { id: 9, project_id: 7, name: 'Закрыта', in_use: false },
+    { id: 1, project_id: 7, name: 'Новый', is_default: true, in_use: false },
+    { id: 9, project_id: 7, name: 'Закрыт', in_use: false },
   ],
   priorities: [{ id: 2, project_id: 7, name: 'low', in_use: false }],
   severities: [{ id: 3, project_id: 7, name: 'Minor', in_use: false }],
@@ -108,7 +108,7 @@ describe('BugDetailsPage', () => {
     await screen.findByRole('heading', { name: 'Краш' });
 
     await userEvent.click(screen.getByRole('combobox', { name: 'Статус' }));
-    await userEvent.click(await screen.findByRole('option', { name: 'Закрыта' }));
+    await userEvent.click(await screen.findByRole('option', { name: 'Закрыт' }));
 
     await waitFor(() => expect(bugsApi.changeBugStatus).toHaveBeenCalledWith(7, 5, 9));
   });

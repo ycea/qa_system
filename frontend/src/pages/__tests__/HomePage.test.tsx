@@ -5,11 +5,9 @@ import { deferred, makeAxiosError, renderWithProviders } from '../../test/test-u
 import HomePage from '../HomePage';
 
 const projectsApi = vi.hoisted(() => ({ fetchProjects: vi.fn(), createProject: vi.fn() }));
-
 vi.mock('../../api/projects', () => projectsApi);
 
 const routeMocks = vi.hoisted(() => ({ navigate: vi.fn() }));
-
 vi.mock('react-router-dom', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react-router-dom')>();
   return { ...actual, useNavigate: () => routeMocks.navigate };
@@ -24,6 +22,15 @@ const project = {
   created_at: '2026-01-01',
   updated_at: '2026-01-02',
 };
+
+const paginated = (data: unknown[], overrides: Record<string, unknown> = {}) => ({
+  data,
+  current_page: 1,
+  last_page: 1,
+  per_page: 30,
+  total: data.length,
+  ...overrides,
+});
 
 const cardByName = (name: string) => screen.getByText(name).closest('.MuiCard-root') as HTMLElement;
 
@@ -51,7 +58,7 @@ describe('HomePage', () => {
   });
 
   it('показывает заглушку при пустом списке', async () => {
-    projectsApi.fetchProjects.mockResolvedValue([]);
+    projectsApi.fetchProjects.mockResolvedValue(paginated([]));
 
     renderWithProviders(<HomePage />);
 
@@ -61,10 +68,9 @@ describe('HomePage', () => {
   });
 
   it('рендерит карточки проектов с описанием и количеством багов', async () => {
-    projectsApi.fetchProjects.mockResolvedValue([
-      project,
-      { ...project, id: 6, name: 'Пустой', description: null, bugs_count: 0 },
-    ]);
+    projectsApi.fetchProjects.mockResolvedValue(
+      paginated([project, { ...project, id: 6, name: 'Пустой', description: null, bugs_count: 0 }]),
+    );
 
     renderWithProviders(<HomePage />);
     await screen.findByText('QMS');
@@ -76,7 +82,7 @@ describe('HomePage', () => {
   });
 
   it('переходит на страницу проекта по клику на карточку', async () => {
-    projectsApi.fetchProjects.mockResolvedValue([project]);
+    projectsApi.fetchProjects.mockResolvedValue(paginated([project]));
 
     renderWithProviders(<HomePage />);
     await screen.findByText('QMS');
@@ -86,8 +92,21 @@ describe('HomePage', () => {
     expect(routeMocks.navigate).toHaveBeenCalledWith('/projects/5');
   });
 
+  it('переключает страницу пагинации', async () => {
+    projectsApi.fetchProjects.mockResolvedValue(paginated([project], { last_page: 2, total: 31 }));
+
+    renderWithProviders(<HomePage />);
+    await screen.findByText('QMS');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Go to page 2' }));
+
+    await waitFor(() =>
+      expect(projectsApi.fetchProjects).toHaveBeenCalledWith({ page: 2, per_page: 30 }),
+    );
+  });
+
   it('не отправляет проект без названия', async () => {
-    projectsApi.fetchProjects.mockResolvedValue([]);
+    projectsApi.fetchProjects.mockResolvedValue(paginated([]));
 
     renderWithProviders(<HomePage />);
     await screen.findByText('У вас пока нет проектов. Создайте первый!');
@@ -100,7 +119,7 @@ describe('HomePage', () => {
   });
 
   it('создаёт проект и закрывает диалог', async () => {
-    projectsApi.fetchProjects.mockResolvedValue([]);
+    projectsApi.fetchProjects.mockResolvedValue(paginated([]));
     projectsApi.createProject.mockResolvedValue({ message: 'created', project });
 
     renderWithProviders(<HomePage />);
@@ -112,7 +131,6 @@ describe('HomePage', () => {
     await userEvent.click(within(dialog).getByRole('button', { name: 'Создать' }));
 
     await waitFor(() => expect(projectsApi.createProject).toHaveBeenCalled());
-    // TanStack Query v5 передаёт во mutationFn вторым аргументом контекст мутации
     expect(projectsApi.createProject.mock.calls[0][0]).toEqual({
       name: 'Новый проект',
       description: 'Описание',
@@ -121,7 +139,7 @@ describe('HomePage', () => {
   });
 
   it('показывает серверную ошибку создания', async () => {
-    projectsApi.fetchProjects.mockResolvedValue([]);
+    projectsApi.fetchProjects.mockResolvedValue(paginated([]));
     projectsApi.createProject.mockRejectedValue(makeAxiosError({ message: 'Название занято' }));
 
     renderWithProviders(<HomePage />);
@@ -135,7 +153,7 @@ describe('HomePage', () => {
   });
 
   it('показывает ошибку по умолчанию при создании', async () => {
-    projectsApi.fetchProjects.mockResolvedValue([]);
+    projectsApi.fetchProjects.mockResolvedValue(paginated([]));
     projectsApi.createProject.mockRejectedValue(new Error('network'));
 
     renderWithProviders(<HomePage />);
@@ -149,7 +167,7 @@ describe('HomePage', () => {
   });
 
   it('закрывает диалог по кнопке Отмена', async () => {
-    projectsApi.fetchProjects.mockResolvedValue([]);
+    projectsApi.fetchProjects.mockResolvedValue(paginated([]));
 
     renderWithProviders(<HomePage />);
     await screen.findByText('У вас пока нет проектов. Создайте первый!');

@@ -1,15 +1,21 @@
 import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithProviders } from '../../test/test-utils';
 import DashboardPage from '../DashboardPage';
 
 const routeMocks = vi.hoisted(() => ({
+  navigate: vi.fn(),
   params: { id: '7' } as Record<string, string | undefined>,
 }));
 
 vi.mock('react-router-dom', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react-router-dom')>();
-  return { ...actual, useParams: () => routeMocks.params };
+  return {
+    ...actual,
+    useNavigate: () => routeMocks.navigate,
+    useParams: () => routeMocks.params,
+  };
 });
 
 const dashboardApi = vi.hoisted(() => ({ fetchDashboard: vi.fn() }));
@@ -37,5 +43,14 @@ describe('DashboardPage', () => {
     renderWithProviders(<DashboardPage />);
 
     expect(await screen.findByText('Не удалось загрузить статистику.')).toBeInTheDocument();
+  });
+
+  it('возвращается к проекту по кнопке Назад', async () => {
+    renderWithProviders(<DashboardPage />);
+    await screen.findByText('Всего багов');
+
+    await userEvent.click(screen.getByRole('button', { name: '← Назад к проекту' }));
+
+    expect(routeMocks.navigate).toHaveBeenCalledWith('/projects/7');
   });
 });

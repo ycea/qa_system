@@ -10,7 +10,7 @@ class DashboardService
     /**
      * Статусы, при которых баг считается открытым (DASH-01).
      */
-    private const OPEN_STATUSES = ['Новая', 'Назначена', 'В работе'];
+    private const OPEN_STATUSES = ['Новый', 'Назначен', 'В работе'];
 
     public function __construct(private readonly DashboardRepositoryInterface $dashboard) {}
 

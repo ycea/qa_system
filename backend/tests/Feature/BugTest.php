@@ -68,15 +68,15 @@ test('список багов проекта с фильтром по стату
 
     fromFrontend($this)->actingAs($owner)
         ->getJson("/api/projects/{$project->id}/bugs")
-        ->assertOk()->assertJsonCount(2);
+        ->assertOk()->assertJsonCount(2, 'data');
 
     fromFrontend($this)->actingAs($owner)
         ->getJson("/api/projects/{$project->id}/bugs?search=Login")
-        ->assertOk()->assertJsonCount(1)->assertJsonFragment(['title' => 'Login broken']);
+        ->assertOk()->assertJsonCount(1, 'data')->assertJsonFragment(['title' => 'Login broken']);
 
     fromFrontend($this)->actingAs($owner)
         ->getJson("/api/projects/{$project->id}/bugs?status_id={$statusWork->id}")
-        ->assertOk()->assertJsonCount(1)->assertJsonFragment(['title' => 'Payment issue']);
+        ->assertOk()->assertJsonCount(1, 'data')->assertJsonFragment(['title' => 'Payment issue']);
 });
 
 /*

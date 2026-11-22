@@ -43,7 +43,7 @@ class DictionaryRepository implements DictionaryRepositoryInterface
         return $this->modelClass($type)::create([
             'project_id' => $project->id,
             'name' => $attributes['name'],
-            // Новым статусам is_default=false: не конкурируют с дефолтным «Новая».
+            // Новым статусам is_default=false: не конкурируют с дефолтным «Новый».
             ...($type === 'statuses' ? ['is_default' => false] : []),
         ]);
     }
@@ -79,6 +79,11 @@ class DictionaryRepository implements DictionaryRepositoryInterface
         }
 
         return $query->exists();
+    }
+
+    public function countForProject(string $type, Project $project): int
+    {
+        return $this->modelClass($type)::where('project_id', $project->id)->count();
     }
 
     /**

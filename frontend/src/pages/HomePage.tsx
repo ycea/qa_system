@@ -10,6 +10,8 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  MenuItem,
+  Pagination,
   TextField,
   Typography,
 } from '@mui/material';
@@ -17,6 +19,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createProject, fetchProjects } from '../api/projects';
+import { PER_PAGE_OPTIONS } from '../api/types';
 
 export default function HomePage() {
   const queryClient = useQueryClient();
@@ -25,15 +28,19 @@ export default function HomePage() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState<number>(30);
 
   const {
-    data: projects,
+    data: projectsResult,
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ['projects'],
-    queryFn: fetchProjects,
+    queryKey: ['projects', page, perPage],
+    queryFn: () => fetchProjects({ page, per_page: perPage }),
   });
+
+  const projects = projectsResult?.data ?? [];
 
   const mutation = useMutation({
     mutationFn: createProject,
@@ -81,7 +88,7 @@ export default function HomePage() {
         </Alert>
       )}
 
-      {!isLoading && projects?.length === 0 && (
+      {!isLoading && projects.length === 0 && (
         <Typography color="text.secondary">У вас пока нет проектов. Создайте первый!</Typography>
       )}
 
@@ -92,7 +99,7 @@ export default function HomePage() {
           gap: 3,
         }}
       >
-        {projects?.map((project) => (
+        {projects.map((project) => (
           <Card
             key={project.id}
             sx={{
@@ -124,6 +131,31 @@ export default function HomePage() {
             </CardContent>
           </Card>
         ))}
+      </Box>
+
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 3 }}>
+        <TextField
+          select
+          size="small"
+          label="На странице"
+          value={perPage}
+          onChange={(e) => {
+            setPerPage(Number(e.target.value));
+            setPage(1);
+          }}
+          sx={{ minWidth: 150 }}
+        >
+          {PER_PAGE_OPTIONS.map((option) => (
+            <MenuItem key={option} value={option}>
+              {option}
+            </MenuItem>
+          ))}
+        </TextField>
+        <Pagination
+          count={projectsResult?.last_page ?? 1}
+          page={page}
+          onChange={(_, value) => setPage(value)}
+        />
       </Box>
 
       <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>

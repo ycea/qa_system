@@ -9,7 +9,7 @@ describe('api/meta', () => {
   it('fetchProjectMeta запрашивает метаданные проекта', async () => {
     const meta = {
       members: [],
-      statuses: [{ id: 1, project_id: 7, name: 'Новая', in_use: false }],
+      statuses: [{ id: 1, project_id: 7, name: 'Новый', in_use: false }],
       priorities: [],
       severities: [],
     };

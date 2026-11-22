@@ -18,6 +18,7 @@ test('create создаёт элемент при уникальном назв�
 
     /** @var DictionaryRepositoryInterface&MockInterface $repo */
     $repo = m::mock(DictionaryRepositoryInterface::class);
+    $repo->shouldReceive('countForProject')->once()->andReturn(0);
     $repo->shouldReceive('nameExists')->once()->with('statuses', $project, 'На проверке', null)->andReturnFalse();
     $repo->shouldReceive('createItem')->once()->with('statuses', $project, ['name' => 'На проверке'])->andReturn($status);
 
@@ -30,9 +31,23 @@ test('create бросает ValidationException при дубликате наз
 
     /** @var DictionaryRepositoryInterface&MockInterface $repo */
     $repo = m::mock(DictionaryRepositoryInterface::class);
+    $repo->shouldReceive('countForProject')->once()->andReturn(0);
     $repo->shouldReceive('nameExists')->once()->andReturnTrue();
 
     expect(fn () => (new DictionaryService($repo))->create($project, 'statuses', 'Новая'))
+        ->toThrow(ValidationException::class);
+});
+
+test('create бросает ValidationException при достижении лимита элементов', function () {
+    $project = new Project;
+    $project->id = 1;
+
+    /** @var DictionaryRepositoryInterface&MockInterface $repo */
+    $repo = m::mock(DictionaryRepositoryInterface::class);
+    $repo->shouldReceive('countForProject')->once()->andReturn(30);
+    $repo->shouldNotReceive('createItem');
+
+    expect(fn () => (new DictionaryService($repo))->create($project, 'statuses', 'Ещё один'))
         ->toThrow(ValidationException::class);
 });
 

@@ -32,4 +32,9 @@ interface DictionaryRepositoryInterface
      * Существует ли в проекте элемент с таким названием (кроме ignoreId).
      */
     public function nameExists(string $type, Project $project, string $name, ?int $ignoreId = null): bool;
+
+    /**
+     * Количество элементов справочника данного типа в проекте.
+     */
+    public function countForProject(string $type, Project $project): int;
 }

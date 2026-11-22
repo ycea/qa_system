@@ -1,5 +1,4 @@
 import {
-  Link,
   MenuItem,
   Select,
   Table,
@@ -52,18 +51,13 @@ export default function BugsTable({
         </TableHead>
         <TableBody>
           {bugs.map((bug) => (
-            <TableRow key={bug.id}>
+            <TableRow key={bug.id} hover sx={{ cursor: 'pointer' }} onClick={() => onOpen(bug)}>
               <TableCell>
-                <Link
-                  component="button"
-                  type="button"
-                  onClick={() => onOpen(bug)}
-                  underline="hover"
-                >
+                <Typography color="primary" sx={{ textDecoration: 'underline' }}>
                   {bug.title}
-                </Link>
+                </Typography>
               </TableCell>
-              <TableCell>
+              <TableCell onClick={(e) => e.stopPropagation()}>
                 <Select
                   size="small"
                   value={bug.status_id}
@@ -79,7 +73,7 @@ export default function BugsTable({
               </TableCell>
               <TableCell>{refName(bug.priority)}</TableCell>
               <TableCell>{refName(bug.severity)}</TableCell>
-              <TableCell>
+              <TableCell onClick={(e) => e.stopPropagation()}>
                 <Select
                   size="small"
                   displayEmpty

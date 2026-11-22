@@ -22,7 +22,13 @@ const project = {
 
 describe('ReportsPage', () => {
   beforeEach(() => {
-    projectsApi.fetchProjects.mockResolvedValue([project]);
+    projectsApi.fetchProjects.mockResolvedValue({
+      data: [project],
+      current_page: 1,
+      last_page: 1,
+      per_page: 100,
+      total: 1,
+    });
     reportsApi.fetchReport.mockResolvedValue({
       period: 'week',
       total: 4,
@@ -50,5 +56,30 @@ describe('ReportsPage', () => {
     expect(screen.getByText('Среднее время жизни (ч)')).toBeInTheDocument();
 
     await waitFor(() => expect(reportsApi.fetchReport).toHaveBeenCalledWith(7, 'week'));
+  });
+
+  it('смена периода перезапрашивает отчёт', async () => {
+    renderWithProviders(<ReportsPage />);
+    await screen.findByText('Выберите проект для построения отчёта.');
+
+    await userEvent.click(screen.getByRole('combobox', { name: 'Проект' }));
+    await userEvent.click(await screen.findByRole('option', { name: 'QMS' }));
+    await screen.findByText('50%');
+
+    await userEvent.click(screen.getByRole('combobox', { name: 'Период' }));
+    await userEvent.click(await screen.findByRole('option', { name: 'Месяц' }));
+
+    await waitFor(() => expect(reportsApi.fetchReport).toHaveBeenCalledWith(7, 'month'));
+  });
+
+  it('содержит варианты периодов: день, неделя, месяц', async () => {
+    renderWithProviders(<ReportsPage />);
+    await screen.findByText('Выберите проект для построения отчёта.');
+
+    await userEvent.click(screen.getByRole('combobox', { name: 'Период' }));
+
+    expect(await screen.findByRole('option', { name: 'День' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Неделя' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Месяц' })).toBeInTheDocument();
   });
 });

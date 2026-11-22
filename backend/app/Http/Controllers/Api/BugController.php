@@ -13,21 +13,35 @@ use App\Services\BugService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 
 class BugController extends Controller
 {
+    /**
+     * Доступные размеры страницы.
+     */
+    private const PER_PAGE_OPTIONS = [30, 50, 100];
+
+    private const DEFAULT_PER_PAGE = 30;
+
     public function __construct(private readonly BugService $bugs) {}
 
     /**
-     * BUG-08: список багов проекта с поиском и фильтрами.
+     * BUG-08: постраничный список багов проекта с поиском и фильтрами.
      */
     public function index(Request $request, Project $project): JsonResponse
     {
         Gate::authorize('view', $project);
 
-        $filters = $request->only(['search', 'status_id', 'priority_id', 'severity_id', 'assignee_id']);
+        $validated = $request->validate([
+            'page' => ['nullable', 'integer', 'min:1'],
+            'per_page' => ['nullable', 'integer', Rule::in(self::PER_PAGE_OPTIONS)],
+        ]);
 
-        return response()->json($this->bugs->list($project, $filters));
+        $filters = $request->only(['search', 'status_id', 'priority_id', 'severity_id', 'assignee_id']);
+        $perPage = (int) ($validated['per_page'] ?? self::DEFAULT_PER_PAGE);
+
+        return response()->json($this->bugs->list($project, $filters, $perPage));
     }
 
     /**

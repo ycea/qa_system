@@ -1,320 +1,119 @@
-"""BUG-01 через BUG-08 — модуль управления багами (尚 не реализован, тесты ожидаемо падают)."""
+"""BUG-01..BUG-08 — модуль управления багами."""
 
 import pytest
 
 
 @pytest.mark.bugs
-class TestBug01:
-    """BUG-01 — Созданный баг-репорт."""
+class TestBug01Creation:
+    def test_create_bug_appears_in_list(self, logged_in_user, created_project, bugs_page):
+        """TC-BUG-01: созданный баг появляется в списке."""
+        bugs_page.open(created_project["id"])
+        bugs_page.click_create()
+        bugs_page.fill_bug_form(
+            title="Краш при входе",
+            description="Описание дефекта",
+            steps="Открыть, войти",
+            priority="normal",
+            severity="Major",
+        )
+        bugs_page.submit_form()
+        bugs_page.expect_bug_in_table("Краш при входе")
 
-    def test_form_fields(self, page, bugs_page):
-        """TC-01-BUG-01-SUCCESS_FORM_FIELDS"""
-        bugs_page.open(1)
-        bugs_page.expect_create_bug_form()
+    def test_empty_title_shows_error(self, logged_in_user, created_project, bugs_page):
+        """TC-BUG-01-FAIL: пустой заголовок даёт ошибку."""
+        bugs_page.open(created_project["id"])
+        bugs_page.click_create()
+        bugs_page.submit_form()
+        bugs_page.expect_error()
 
-    def test_create_with_all_fields(self, page, bugs_page):
-        """TC-02-BUG-01-SUCCESS_CREATE_WITH_ALL_FIELDS"""
-        bugs_page.open(1)
-        bugs_page.expect_create_bug_form()
-
-    def test_bug_appears_in_list(self, page, bugs_page):
-        """TC-03-BUG-01-SUCCESS_BUG_APPEARS_IN_LIST"""
-        bugs_page.open(1)
-        bugs_page.expect_bugs_table()
-
-    def test_history_create_record(self, page, bugs_page):
-        """TC-04-BUG-01-SUCCESS_HISTORY_CREATE_RECORD"""
-        bugs_page.expect_bug_details(1)
-
-    def test_empty_title(self, page, bugs_page):
-        """TC-05-BUG-01-FAIL_EMPTY_TITLE"""
-        bugs_page.open(1)
-        bugs_page.expect_create_bug_form()
-
-    def test_whitespace_title(self, page, bugs_page):
-        """TC-06-BUG-01-FAIL_WHITESPACE_TITLE"""
-        bugs_page.open(1)
-        bugs_page.expect_create_bug_form()
-
-    def test_empty_description(self, page, bugs_page):
-        """TC-07-BUG-01-FAIL_EMPTY_DESCRIPTION"""
-        bugs_page.open(1)
-        bugs_page.expect_create_bug_form()
-
-    def test_empty_steps(self, page, bugs_page):
-        """TC-08-BUG-01-FAIL_EMPTY_STEPS"""
-        bugs_page.open(1)
-        bugs_page.expect_create_bug_form()
-
-    def test_priority_not_selected(self, page, bugs_page):
-        """TC-09-BUG-01-FAIL_PRIORITY_NOT_SELECTED"""
-        bugs_page.open(1)
-        bugs_page.expect_create_bug_form()
-
-    def test_severity_not_selected(self, page, bugs_page):
-        """TC-10-BUG-01-FAIL_SEVERITY_NOT_SELECTED"""
-        bugs_page.open(1)
-        bugs_page.expect_create_bug_form()
-
-    def test_status_not_selected(self, page, bugs_page):
-        """TC-11-BUG-01-FAIL_STATUS_NOT_SELECTED"""
-        bugs_page.open(1)
-        bugs_page.expect_create_bug_form()
-
-    def test_assignee_optional(self, page, bugs_page):
-        """TC-12-BUG-01-SUCCESS_ASSIGNEE_OPTIONAL"""
-        bugs_page.open(1)
-        bugs_page.expect_create_bug_form()
+    def test_back_to_project(self, logged_in_user, created_project, bugs_page, project_page):
+        """Дефект 1: возврат к проекту со страницы багов."""
+        bugs_page.open(created_project["id"])
+        bugs_page.click_back_to_project()
+        project_page.expect_project_opened(created_project["name"])
 
 
 @pytest.mark.bugs
-class TestBug02:
-    """BUG-02 — Вывод детальной информации по баг-репорту."""
+class TestBug02Details:
+    def test_row_click_opens_details(self, logged_in_user, created_project, bugs_page):
+        """Дефект 3: переход в баг кликом по строке (не только по заголовку)."""
+        bugs_page.open(created_project["id"])
+        bugs_page.click_create()
+        bugs_page.fill_bug_form(
+            title="Баг для деталей",
+            description="Описание",
+            steps="Шаги",
+            priority="normal",
+            severity="Major",
+        )
+        bugs_page.submit_form()
 
-    def test_details_page_opens(self, page, bugs_page):
-        """TC-01-BUG-02-SUCCESS_DETAILS_PAGE_OPENS"""
-        bugs_page.expect_bug_details(1)
+        bugs_page.click_bug_row("Баг для деталей")
 
-    def test_all_fields_displayed(self, page, bugs_page):
-        """TC-02-BUG-02-SUCCESS_ALL_FIELDS_DISPLAYED"""
-        bugs_page.expect_bug_details(1)
-
-    def test_history_feed(self, page, bugs_page):
-        """TC-03-BUG-02-SUCCESS_HISTORY_FEED"""
-        bugs_page.expect_bug_details(1)
-
-    def test_back_button(self, page, bugs_page):
-        """TC-04-BUG-02-SUCCESS_BACK_BUTTON"""
-        bugs_page.expect_bug_details(1)
-
-    def test_non_existing_bug(self, page, bugs_page):
-        """TC-05-BUG-02-FAIL_NON_EXISTING_BUG"""
-        bugs_page.open(99999)
-        bugs_page.expect_404()
+        bugs_page.expect_details("Баг для деталей")
+        bugs_page.expect_history_section()
+        bugs_page.expect_back_to_list()
 
 
 @pytest.mark.bugs
-class TestBug03:
-    """BUG-03 — Функционал редактирования баг-репорта."""
+class TestBug06StatusInTable:
+    def test_change_status_from_table(self, logged_in_user, created_project, bugs_page):
+        """BUG-06: смена статуса прямо из таблицы."""
+        bugs_page.open(created_project["id"])
+        bugs_page.click_create()
+        bugs_page.fill_bug_form(
+            title="Баг со статусом",
+            description="Описание",
+            steps="Шаги",
+            priority="normal",
+            severity="Major",
+        )
+        bugs_page.submit_form()
 
-    def test_edit_button_present(self, page, bugs_page):
-        """TC-01-BUG-03-SUCCESS_EDIT_BUTTON_PRESENT"""
-        bugs_page.expect_bug_details(1)
-
-    def test_edit_title(self, page, bugs_page):
-        """TC-02-BUG-03-SUCCESS_EDIT_TITLE"""
-        bugs_page.expect_bug_details(1)
-
-    def test_edit_description(self, page, bugs_page):
-        """TC-03-BUG-03-SUCCESS_EDIT_DESCRIPTION"""
-        bugs_page.expect_bug_details(1)
-
-    def test_edit_priority(self, page, bugs_page):
-        """TC-04-BUG-03-SUCCESS_EDIT_PRIORITY"""
-        bugs_page.expect_bug_details(1)
-
-    def test_edit_severity(self, page, bugs_page):
-        """TC-05-BUG-03-SUCCESS_EDIT_SEVERITY"""
-        bugs_page.expect_bug_details(1)
-
-    def test_edit_steps(self, page, bugs_page):
-        """TC-06-BUG-03-SUCCESS_EDIT_STEPS"""
-        bugs_page.expect_bug_details(1)
-
-    def test_history_edit_record(self, page, bugs_page):
-        """TC-07-BUG-03-SUCCESS_HISTORY_EDIT_RECORD"""
-        bugs_page.expect_bug_details(1)
-
-    def test_edit_empty_title(self, page, bugs_page):
-        """TC-08-BUG-03-FAIL_EDIT_EMPTY_TITLE"""
-        bugs_page.expect_bug_details(1)
-
-    def test_edit_empty_description(self, page, bugs_page):
-        """TC-09-BUG-03-FAIL_EDIT_EMPTY_DESCRIPTION"""
-        bugs_page.expect_bug_details(1)
-
-    def test_edit_empty_steps(self, page, bugs_page):
-        """TC-10-BUG-03-FAIL_EDIT_EMPTY_STEPS"""
-        bugs_page.expect_bug_details(1)
+        bugs_page.change_status_in_table("Баг со статусом", "В работе")
+        bugs_page.click_bug_row("Баг со статусом")
+        bugs_page.expect_history_record("Статус")
 
 
 @pytest.mark.bugs
-class TestBug04:
-    """BUG-04 — Функционал изменения баг-репорта."""
+class TestBug07Comments:
+    def test_add_comment(self, logged_in_user, created_project, bugs_page):
+        """BUG-07: добавление комментария к багу."""
+        bugs_page.open(created_project["id"])
+        bugs_page.click_create()
+        bugs_page.fill_bug_form(
+            title="Баг с комментарием",
+            description="Описание",
+            steps="Шаги",
+            priority="normal",
+            severity="Major",
+        )
+        bugs_page.submit_form()
 
-    def test_status_dropdown_present(self, page, bugs_page):
-        """TC-01-BUG-04-SUCCESS_STATUS_DROPDOWN_PRESENT"""
-        bugs_page.expect_bug_details(1)
-
-    def test_all_statuses_available(self, page, bugs_page):
-        """TC-02-BUG-04-SUCCESS_ALL_STATUSES_AVAILABLE"""
-        bugs_page.expect_bug_details(1)
-
-    def test_change_status(self, page, bugs_page):
-        """TC-03-BUG-04-SUCCESS_CHANGE_STATUS"""
-        bugs_page.expect_bug_details(1)
-
-    def test_history_status_record(self, page, bugs_page):
-        """TC-04-BUG-04-SUCCESS_HISTORY_STATUS_RECORD"""
-        bugs_page.expect_bug_details(1)
-
-    def test_same_status(self, page, bugs_page):
-        """TC-05-BUG-04-FAIL_SAME_STATUS"""
-        bugs_page.expect_bug_details(1)
+        bugs_page.click_bug_row("Баг с комментарием")
+        bugs_page.add_comment("Первый комментарий")
+        bugs_page.expect_comment("Первый комментарий")
 
 
 @pytest.mark.bugs
-class TestBug05:
-    """BUG-05 — Модуль для назначения исполнителя на баг-репорт."""
+class TestBug08Filters:
+    def test_search_and_reset(self, logged_in_user, created_project, bugs_page):
+        """BUG-08: поиск по заголовку и сброс фильтров."""
+        bugs_page.open(created_project["id"])
+        for title in ("Login broken", "Payment issue"):
+            bugs_page.click_create()
+            bugs_page.fill_bug_form(
+                title=title,
+                description="Описание",
+                steps="Шаги",
+                priority="normal",
+                severity="Major",
+            )
+            bugs_page.submit_form()
 
-    def test_assignee_dropdown_present(self, page, bugs_page):
-        """TC-01-BUG-05-SUCCESS_ASSIGNEE_DROPDOWN_PRESENT"""
-        bugs_page.expect_bug_details(1)
+        bugs_page.search("Login")
+        bugs_page.expect_bug_in_table("Login broken")
+        bugs_page.expect_bug_absent("Payment issue")
 
-    def test_any_participant_can_assign(self, page, bugs_page):
-        """TC-02-BUG-05-SUCCESS_ANY_PARTICIPANT_CAN_ASSIGN"""
-        bugs_page.expect_bug_details(1)
-
-    def test_assignee_displayed(self, page, bugs_page):
-        """TC-03-BUG-05-SUCCESS_ASSIGNEE_DISPLAYED"""
-        bugs_page.expect_bug_details(1)
-
-    def test_history_assign_record(self, page, bugs_page):
-        """TC-04-BUG-05-SUCCESS_HISTORY_ASSIGN_RECORD"""
-        bugs_page.expect_bug_details(1)
-
-    def test_reassign(self, page, bugs_page):
-        """TC-05-BUG-05-SUCCESS_REASSIGN"""
-        bugs_page.expect_bug_details(1)
-
-    def test_assign_non_participant(self, page, bugs_page):
-        """TC-06-BUG-05-FAIL_ASSIGN_NON_PARTICIPANT"""
-        bugs_page.expect_bug_details(1)
-
-
-@pytest.mark.bugs
-class TestBug06:
-    """BUG-06 — Функционал по редактированию баг-репорта без перехода к детальному багу."""
-
-    def test_dropdowns_in_table(self, page, bugs_page):
-        """TC-01-BUG-06-SUCCESS_DROPDOWNS_IN_TABLE"""
-        bugs_page.open(1)
-        bugs_page.expect_bugs_table()
-
-    def test_change_status_in_table(self, page, bugs_page):
-        """TC-02-BUG-06-SUCCESS_CHANGE_STATUS_IN_TABLE"""
-        bugs_page.open(1)
-        bugs_page.expect_bugs_table()
-
-    def test_assign_in_table(self, page, bugs_page):
-        """TC-03-BUG-06-SUCCESS_ASSIGN_IN_TABLE"""
-        bugs_page.open(1)
-        bugs_page.expect_bugs_table()
-
-    def test_actions_depend_on_role(self, page, bugs_page):
-        """TC-04-BUG-06-SUCCESS_ACTIONS_DEPEND_ON_ROLE"""
-        bugs_page.open(1)
-        bugs_page.expect_bugs_table()
-
-    def test_history_record_from_table(self, page, bugs_page):
-        """TC-05-BUG-06-SUCCESS_HISTORY_RECORD_FROM_TABLE"""
-        bugs_page.open(1)
-        bugs_page.expect_bugs_table()
-
-    def test_invalid_status_transition(self, page, bugs_page):
-        """TC-06-BUG-06-FAIL_INVALID_STATUS_TRANSITION"""
-        bugs_page.open(1)
-        bugs_page.expect_bugs_table()
-
-
-@pytest.mark.bugs
-class TestBug07:
-    """BUG-07 — Добавление комментариев к баг-репорту."""
-
-    def test_comment_form_present(self, page, bugs_page):
-        """TC-01-BUG-07-SUCCESS_COMMENT_FORM_PRESENT"""
-        bugs_page.expect_bug_details(1)
-
-    def test_add_comment(self, page, bugs_page):
-        """TC-02-BUG-07-SUCCESS_ADD_COMMENT"""
-        bugs_page.expect_bug_details(1)
-
-    def test_author_and_time_displayed(self, page, bugs_page):
-        """TC-03-BUG-07-SUCCESS_AUTHOR_AND_TIME_DISPLAYED"""
-        bugs_page.expect_bug_details(1)
-
-    def test_all_participants_see_comments(self, page, bugs_page):
-        """TC-04-BUG-07-SUCCESS_ALL_PARTICIPANTS_SEE_COMMENTS"""
-        bugs_page.expect_bug_details(1)
-
-    def test_empty_comment(self, page, bugs_page):
-        """TC-05-BUG-07-FAIL_EMPTY_COMMENT"""
-        bugs_page.expect_bug_details(1)
-
-    def test_whitespace_comment(self, page, bugs_page):
-        """TC-06-BUG-07-FAIL_WHITESPACE_COMMENT"""
-        bugs_page.expect_bug_details(1)
-
-    def test_chronological_order(self, page, bugs_page):
-        """TC-07-BUG-07-SUCCESS_CHRONOLOGICAL_ORDER"""
-        bugs_page.expect_bug_details(1)
-
-
-@pytest.mark.bugs
-class TestBug08:
-    """BUG-08 — Модуль фильтрации и поиска багов."""
-
-    def test_all_bugs_table(self, page, bugs_page):
-        """TC-01-BUG-08-SUCCESS_ALL_BUGS_TABLE"""
-        bugs_page.open(1)
-        bugs_page.expect_bugs_table()
-
-    def test_filter_controls_present(self, page, bugs_page):
-        """TC-02-BUG-08-SUCCESS_FILTER_CONTROLS_PRESENT"""
-        bugs_page.open(1)
-        bugs_page.expect_bugs_table()
-
-    def test_search_partial_match(self, page, bugs_page):
-        """TC-03-BUG-08-SUCCESS_SEARCH_PARTIAL_MATCH"""
-        bugs_page.open(1)
-        bugs_page.expect_bugs_table()
-
-    def test_filter_by_status(self, page, bugs_page):
-        """TC-04-BUG-08-SUCCESS_FILTER_BY_STATUS"""
-        bugs_page.open(1)
-        bugs_page.expect_bugs_table()
-
-    def test_filter_by_priority(self, page, bugs_page):
-        """TC-05-BUG-08-SUCCESS_FILTER_BY_PRIORITY"""
-        bugs_page.open(1)
-        bugs_page.expect_bugs_table()
-
-    def test_filter_by_severity(self, page, bugs_page):
-        """TC-06-BUG-08-SUCCESS_FILTER_BY_SEVERITY"""
-        bugs_page.open(1)
-        bugs_page.expect_bugs_table()
-
-    def test_filter_by_assignee(self, page, bugs_page):
-        """TC-07-BUG-08-SUCCESS_FILTER_BY_ASSIGNEE"""
-        bugs_page.open(1)
-        bugs_page.expect_bugs_table()
-
-    def test_combine_filters_and_search(self, page, bugs_page):
-        """TC-08-BUG-08-SUCCESS_COMBINE_FILTERS_AND_SEARCH"""
-        bugs_page.open(1)
-        bugs_page.expect_bugs_table()
-
-    def test_auto_refresh_on_change(self, page, bugs_page):
-        """TC-09-BUG-08-SUCCESS_AUTO_REFRESH_ON_CHANGE"""
-        bugs_page.open(1)
-        bugs_page.expect_bugs_table()
-
-    def test_reset_all(self, page, bugs_page):
-        """TC-10-BUG-08-SUCCESS_RESET_ALL"""
-        bugs_page.open(1)
-        bugs_page.expect_bugs_table()
-
-    def test_no_results_state(self, page, bugs_page):
-        """TC-11-BUG-08-SUCCESS_NO_RESULTS_STATE"""
-        bugs_page.open(1)
-        bugs_page.expect_bugs_table()
+        bugs_page.reset_filters()
+        bugs_page.expect_bug_in_table("Payment issue")

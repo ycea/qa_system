@@ -9,28 +9,22 @@ use App\Models\Project;
 use App\Models\User;
 use App\Repositories\Contracts\BugHistoryRepositoryInterface;
 use App\Repositories\Contracts\BugRepositoryInterface;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
 class BugService
 {
-    /**
-     * Название статуса, при установке которого баг считается закрытым.
-     */
-    private const CLOSED_STATUS_NAME = 'Закрыта';
-
     public function __construct(
         private readonly BugRepositoryInterface $bugs,
         private readonly BugHistoryRepositoryInterface $histories,
     ) {}
 
     /**
-     * Список багов проекта с фильтрами (BUG-08).
-     *
-     * @return Collection<int, Bug>
+     * Постраничный список багов проекта с фильтрами (BUG-08).
      */
-    public function list(Project $project, array $filters): Collection
+    public function list(Project $project, array $filters, int $perPage): LengthAwarePaginator
     {
-        return $this->bugs->listForProject($project, $filters);
+        return $this->bugs->paginateForProject($project, $filters, $perPage);
     }
 
     /**
@@ -107,7 +101,7 @@ class BugService
         $oldName = $bug->status?->name;
 
         $bug->status_id = $status->id;
-        $bug->closed_at = $status->name === self::CLOSED_STATUS_NAME
+        $bug->closed_at = $status->is_closed
             ? ($bug->closed_at ?? now())
             : null;
         $bug->save();

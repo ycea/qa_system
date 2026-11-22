@@ -606,8 +606,8 @@ class TestProj06Dictionaries:
         project_page.click_dictionaries_tab()
         project_page.click_dictionary_type("statuses")
         # дефолтный статус удалить нельзя, а обычный — можно
-        project_page.expect_delete_button_disabled("Новая")
-        project_page.expect_delete_button_enabled("Назначена")
+        project_page.expect_delete_button_disabled("Новый")
+        project_page.expect_delete_button_enabled("Назначен")
 
     def test_delete_used_element_direct_action(
         self, page, logged_in_user, created_project, project_page
@@ -617,8 +617,8 @@ class TestProj06Dictionaries:
         project_page.click_dictionaries_tab()
         project_page.click_dictionary_type("statuses")
         # элемент никуда не исчезает: кнопка отключена, состав справочника неизменен
-        project_page.expect_delete_button_disabled("Новая")
-        project_page.expect_dictionary_item("Новая")
+        project_page.expect_delete_button_disabled("Новый")
+        project_page.expect_dictionary_item("Новый")
         project_page.expect_dictionary_items_count(6)
 
     def test_admin_sees_all_dictionary_types(
@@ -629,7 +629,7 @@ class TestProj06Dictionaries:
         project_page.click_dictionaries_tab()
         project_page.expect_dictionaries_tab_visible()
         project_page.click_dictionary_type("statuses")
-        project_page.expect_dictionary_item("Новая")
+        project_page.expect_dictionary_item("Новый")
         project_page.click_dictionary_type("priorities")
         project_page.expect_dictionary_item("low")
         project_page.click_dictionary_type("severities")

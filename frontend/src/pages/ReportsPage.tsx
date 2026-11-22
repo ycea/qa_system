@@ -27,7 +27,12 @@ export default function ReportsPage() {
   const [projectId, setProjectId] = useState<number | ''>('');
   const [period, setPeriod] = useState<ReportPeriod>('week');
 
-  const { data: projects } = useQuery({ queryKey: ['projects'], queryFn: fetchProjects });
+  const { data: projectsResult } = useQuery({
+    queryKey: ['projects', 'select'],
+    queryFn: () => fetchProjects({ page: 1, per_page: 100 }),
+  });
+
+  const projects = projectsResult?.data ?? [];
 
   const { data: report, isLoading } = useQuery({
     queryKey: ['report', projectId, period],
@@ -50,7 +55,7 @@ export default function ReportsPage() {
           sx={{ minWidth: 220 }}
         >
           <MenuItem value="">— выберите проект —</MenuItem>
-          {(projects ?? []).map((project) => (
+          {projects.map((project) => (
             <MenuItem key={project.id} value={project.id}>
               {project.name}
             </MenuItem>

@@ -7,7 +7,7 @@ uses(RefreshDatabase::class);
 
 test('отчёт считает показатели за период', function () {
     [$owner, $project] = bugProjectWithAdmin();
-    $closedStatus = $project->statuses()->where('name', 'Закрыта')->first();
+    $closedStatus = $project->statuses()->where('name', 'Закрыт')->first();
 
     // Жизнь 10 часов.
     $bugA = makeBug($project, $owner, ['status_id' => $closedStatus->id]);
@@ -37,7 +37,7 @@ test('отчёт считает показатели за период', functio
 
 test('баги вне периода не учитываются', function () {
     [$owner, $project] = bugProjectWithAdmin();
-    $closedStatus = $project->statuses()->where('name', 'Закрыта')->first();
+    $closedStatus = $project->statuses()->where('name', 'Закрыт')->first();
 
     $bug = makeBug($project, $owner, ['status_id' => $closedStatus->id]);
     $bug->created_at = now()->subDays(40);

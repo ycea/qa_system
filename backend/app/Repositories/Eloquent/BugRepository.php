@@ -6,11 +6,11 @@ use App\Models\Bug;
 use App\Models\Project;
 use App\Models\User;
 use App\Repositories\Contracts\BugRepositoryInterface;
-use Illuminate\Support\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class BugRepository implements BugRepositoryInterface
 {
-    public function listForProject(Project $project, array $filters): Collection
+    public function paginateForProject(Project $project, array $filters, int $perPage): LengthAwarePaginator
     {
         return Bug::query()
             ->where('project_id', $project->id)
@@ -21,7 +21,7 @@ class BugRepository implements BugRepositoryInterface
             ->when(! empty($filters['severity_id']), fn ($query) => $query->where('severity_id', $filters['severity_id']))
             ->when(! empty($filters['assignee_id']), fn ($query) => $query->where('assignee_id', $filters['assignee_id']))
             ->orderByDesc('id')
-            ->get();
+            ->paginate($perPage);
     }
 
     public function create(Project $project, User $author, array $attributes): Bug

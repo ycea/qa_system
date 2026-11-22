@@ -1,4 +1,5 @@
 import api from './axios';
+import type { Paginated } from './types';
 
 export type BugStatus = {
   id: number;
@@ -83,8 +84,14 @@ const cleanParams = (filters: BugFilters): Record<string, string | number> =>
     ),
   ) as Record<string, string | number>;
 
-export const fetchBugs = async (projectId: number, filters: BugFilters = {}): Promise<Bug[]> => {
-  const { data } = await api.get(`/projects/${projectId}/bugs`, { params: cleanParams(filters) });
+export const fetchBugs = async (
+  projectId: number,
+  filters: BugFilters = {},
+  params: { page?: number; per_page?: number } = {},
+): Promise<Paginated<Bug>> => {
+  const { data } = await api.get(`/projects/${projectId}/bugs`, {
+    params: { ...cleanParams(filters), ...params },
+  });
   return data;
 };
 

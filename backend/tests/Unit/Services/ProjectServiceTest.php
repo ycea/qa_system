@@ -4,6 +4,7 @@ use App\Models\Project;
 use App\Models\User;
 use App\Repositories\Contracts\ProjectRepositoryInterface;
 use App\Services\ProjectService;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Mockery as m;
 use Mockery\MockInterface;
 
@@ -46,15 +47,15 @@ test('create передаёт описание, если оно задано', f
     (new ProjectService($repo))->create($user, ['name' => 'P', 'description' => 'desc']);
 });
 
-test('listForUser делегирует в репозиторий', function () {
+test('listForUser делегирует в репозиторий с пагинацией', function () {
     $user = new User;
-    $collection = collect();
+    $paginator = m::mock(LengthAwarePaginator::class);
 
     /** @var ProjectRepositoryInterface&MockInterface $repo */
     $repo = m::mock(ProjectRepositoryInterface::class);
-    $repo->shouldReceive('listForUser')->once()->with($user)->andReturn($collection);
+    $repo->shouldReceive('paginateForUser')->once()->with($user, 30)->andReturn($paginator);
 
-    expect((new ProjectService($repo))->listForUser($user))->toBe($collection);
+    expect((new ProjectService($repo))->listForUser($user, 30))->toBe($paginator);
 });
 
 test('getForUser загружает участников и количество багов', function () {
