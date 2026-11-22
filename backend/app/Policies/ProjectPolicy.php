@@ -49,6 +49,14 @@ class ProjectPolicy
             ->exists();
     }
 
+    /**
+     * Управление метриками — только админ проекта.
+     */
+    public function manageMetrics(User $user, Project $project): bool
+    {
+        return $this->manageDictionaries($user, $project);
+    }
+
     public function delete(User $user, Project $project): bool
     {
         return $project->owner_id === $user->id;

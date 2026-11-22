@@ -32,6 +32,9 @@ vi.mock('../../api/meta', () => metaApi);
 const commentsApi = vi.hoisted(() => ({ fetchComments: vi.fn(), addComment: vi.fn() }));
 vi.mock('../../api/comments', () => commentsApi);
 
+const metricsApi = vi.hoisted(() => ({ fetchMetrics: vi.fn(), setMetricValue: vi.fn() }));
+vi.mock('../../api/metrics', () => metricsApi);
+
 const meta = {
   members: [{ id: 2, name: 'dev', email: 'dev@example.com', role: 'developer' as const }],
   statuses: [
@@ -77,6 +80,7 @@ describe('BugDetailsPage', () => {
     routeMocks.params = { id: '7', bugId: '5' };
     metaApi.fetchProjectMeta.mockResolvedValue(meta);
     commentsApi.fetchComments.mockResolvedValue([]);
+    metricsApi.fetchMetrics.mockResolvedValue([]);
     bugsApi.fetchBug.mockResolvedValue(bug);
   });
 

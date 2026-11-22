@@ -74,6 +74,15 @@ export default function MainLayout() {
             )}
             <Button
               color="primary"
+              variant="text"
+              size="small"
+              onClick={() => navigate('/reports')}
+              sx={{ borderRadius: 2 }}
+            >
+              Отчёты
+            </Button>
+            <Button
+              color="primary"
               variant="outlined"
               size="small"
               onClick={handleLogout}

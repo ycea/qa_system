@@ -16,6 +16,7 @@ import { assignBug, changeBugStatus, fetchBug, updateBug, type BugPayload } from
 import { fetchProjectMeta } from '../api/meta';
 import BugFormDialog, { type BugFormValues } from '../components/BugFormDialog';
 import BugHistoryFeed from '../components/BugHistoryFeed';
+import BugMetricsSection from '../components/BugMetricsSection';
 import CommentsSection from '../components/CommentsSection';
 import { extractErrorMessage } from '../utils/errors';
 import { toNullableId } from '../utils/values';
@@ -151,6 +152,10 @@ export default function BugDetailsPage() {
       </Paper>
 
       <BugHistoryFeed items={bug.histories ?? []} />
+
+      <Divider sx={{ my: 3 }} />
+
+      <BugMetricsSection projectId={projectId} bugId={numericBugId} />
 
       <Divider sx={{ my: 3 }} />
 
