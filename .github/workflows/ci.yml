@@ -48,7 +48,7 @@ jobs:
               uses: shivammathur/setup-php@v2
               with:
                   php-version: "8.4"
-                  extensions: mbstring, pdo_pgsql, bcmath, gd, exif, pcntl
+                  extensions: mbstring, pdo_pgsql, bcmath, gd, exif, pcntl, zip, dom, simplexml, xml, xmlreader, xmlwriter
                   coverage: xdebug
                   tools: composer:v2
 

@@ -3,8 +3,8 @@ set -e
 
 cd /var/www
 
-# 1. Установить зависимости, если vendor отсутствует или composer.lock новее
-if [ ! -f vendor/autoload.php ] || [ composer.lock -nt vendor/autoload.php ]; then
+# 1. Установить зависимости, если vendor отсутствует/неполный или composer.lock новее
+if [ ! -f vendor/autoload.php ] || [ ! -d vendor/laravel/framework ] || [ composer.lock -nt vendor/autoload.php ]; then
     echo "==> Installing Composer dependencies..."
     composer install --no-interaction --prefer-dist --optimize-autoloader
 fi
