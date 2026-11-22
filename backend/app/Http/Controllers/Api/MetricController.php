@@ -82,6 +82,8 @@ class MetricController extends Controller
     {
         Gate::authorize('view', $project);
 
-        return Excel::download(new MetricsExport($this->metrics->exportRows($project)), 'metrics.xlsx');
+        $fileName = 'metrics-project-'.$project->id.'.xlsx';
+
+        return Excel::download(new MetricsExport($this->metrics->reportData($project)), $fileName);
     }
 }

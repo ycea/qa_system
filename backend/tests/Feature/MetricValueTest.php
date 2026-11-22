@@ -89,7 +89,7 @@ test('экспорт метрик отдаёт xlsx-файл', function () {
     fromFrontend($this)->actingAs($owner)
         ->get("/api/projects/{$project->id}/metrics/export")
         ->assertOk()
-        ->assertDownload('metrics.xlsx');
+        ->assertDownload("metrics-project-{$project->id}.xlsx");
 });
 
 test('посторонний не видит аналитику метрик', function () {

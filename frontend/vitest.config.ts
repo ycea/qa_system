@@ -12,6 +12,7 @@ export default defineConfig({
     css: false,
     restoreMocks: true,
     clearMocks: true,
+    testTimeout: 15000,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],

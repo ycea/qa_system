@@ -20,11 +20,11 @@ class TestBug01Creation:
         bugs_page.expect_bug_in_table("Краш при входе")
 
     def test_empty_title_shows_error(self, logged_in_user, created_project, bugs_page):
-        """TC-BUG-01-FAIL: пустой заголовок даёт ошибку."""
+        """TC-BUG-01-FAIL: пустой заголовок — кнопка сохранения неактивна."""
         bugs_page.open(created_project["id"])
         bugs_page.click_create()
-        bugs_page.submit_form()
-        bugs_page.expect_error()
+        bugs_page.expect_save_disabled()
+        bugs_page.cancel_form()
 
     def test_back_to_project(self, logged_in_user, created_project, bugs_page, project_page):
         """Дефект 1: возврат к проекту со страницы багов."""

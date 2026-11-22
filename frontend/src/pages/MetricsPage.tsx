@@ -20,7 +20,6 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Bar, BarChart, CartesianGrid, Tooltip as ChartTooltip, XAxis, YAxis } from 'recharts';
 import {
   createMetric,
   deleteMetric,
@@ -33,6 +32,7 @@ import {
   type MetricAnalytics,
 } from '../api/metrics';
 import { fetchProject } from '../api/projects';
+import MetricChart from '../components/MetricChart';
 import MetricFormDialog, { type MetricFormValues } from '../components/MetricFormDialog';
 import { useAuth } from '../context/use-auth';
 import { extractErrorMessage } from '../utils/errors';
@@ -134,11 +134,6 @@ export default function MetricsPage() {
   const isOwner = project?.owner_id === user?.id;
   const myMembership = project?.members?.find((member) => member.id === user?.id);
   const isAdmin = isOwner || myMembership?.pivot.role === 'admin';
-
-  const chartData = (analytics ?? []).map((item) => ({
-    name: item.metric.name,
-    count: item.count,
-  }));
 
   const openCreate = () => {
     setEditing(null);
@@ -246,22 +241,13 @@ export default function MetricsPage() {
                   Всего значений: {item.count}
                 </Typography>
                 <Typography variant="body2">{indicatorsText(item)}</Typography>
+                <Box sx={{ mt: 1 }}>
+                  <MetricChart item={item} />
+                </Box>
               </CardContent>
             </Card>
           ))}
         </Box>
-      )}
-
-      {chartData.length > 0 && (
-        <Paper sx={{ p: 2 }}>
-          <BarChart width={520} height={260} data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" />
-            <YAxis allowDecimals={false} />
-            <ChartTooltip />
-            <Bar dataKey="count" fill="#1976d2" />
-          </BarChart>
-        </Paper>
       )}
 
       {dialogOpen && (

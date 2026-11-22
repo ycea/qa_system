@@ -65,8 +65,16 @@ class MetricsPage(BasePage):
     def expect_metric_card(self, name: str) -> None:
         expect(self.page.locator(f'.MuiCard-root:has-text("{name}")')).to_be_visible()
 
-    def expect_chart_visible(self) -> None:
-        expect(self.page.locator("svg.recharts-surface")).to_be_visible()
+    def expect_charts_count(self, count: int) -> None:
+        expect(self.page.locator("svg.recharts-surface")).to_have_count(count)
+
+    def expect_chart_for(self, name: str) -> None:
+        """График внутри карточки указанной метрики."""
+        card = self.page.locator(f'.MuiCard-root:has-text("{name}")')
+        expect(card.locator("svg.recharts-surface")).to_be_visible()
+
+    def expect_no_chart_data(self) -> None:
+        expect(self.page.get_by_text("Нет данных для графика.").first).to_be_visible()
 
     def expect_export_link(self, href: str | None = None) -> None:
         link = self.page.get_by_role("link", name=self.EXPORT)

@@ -178,4 +178,15 @@ describe('HomePage', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(projectsApi.createProject).not.toHaveBeenCalled();
   });
+
+  it('ограничивает описание 500 символами', async () => {
+    projectsApi.fetchProjects.mockResolvedValue(paginated([]));
+
+    renderWithProviders(<HomePage />);
+    await screen.findByText('У вас пока нет проектов. Создайте первый!');
+
+    await openCreateDialog();
+
+    expect(screen.getByLabelText('Описание (опционально)')).toHaveAttribute('maxlength', '500');
+  });
 });

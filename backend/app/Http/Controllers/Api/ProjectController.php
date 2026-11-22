@@ -43,7 +43,11 @@ class ProjectController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'description' => ['nullable', 'string', 'max:500'],
+        ], [
+            'name.required' => 'Введите название проекта.',
+            'name.max' => 'Название слишком длинное (макс. 255).',
+            'description.max' => 'Описание не должно превышать 500 символов.',
         ]);
 
         $project = $this->projects->create($request->user(), $validated);

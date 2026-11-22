@@ -39,7 +39,16 @@ const analytics = [
     metric: { id: 3, name: 'Время', type: 'numeric' as const, options: null },
     count: 2,
     indicators: { avg: 15, min: 10, max: 20, sum: 30 },
-    by_status: [],
+    by_status: [{ status: 'Новый', count: 2, avg: 15 }],
+  },
+  {
+    metric: { id: 4, name: 'Компонент', type: 'categorical' as const, options: ['UI', 'API'] },
+    count: 3,
+    indicators: [
+      { value: 'UI', count: 2 },
+      { value: 'API', count: 1 },
+    ],
+    by_status: [{ status: 'Новый', count: 3, avg: null }],
   },
 ];
 
@@ -193,5 +202,20 @@ describe('MetricsPage', () => {
       'href',
       '/api/projects/7/metrics/export',
     );
+  });
+
+  it('строит отдельный график для каждой метрики', async () => {
+    const { container } = renderWithProviders(<MetricsPage />, {
+      auth: createAuthValue({ user: { id: 1, name: 'owner', email: 'o@e.com' } }),
+    });
+    await screen.findByRole('heading', { name: 'Компонент' });
+
+    // По графику на каждую метрику (числовая + категориальная).
+    expect(container.querySelectorAll('svg.recharts-surface')).toHaveLength(2);
+
+    // Числовая — агрегация по статусам; категориальная — распределение значений.
+    expect(screen.getAllByText('Новый').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('UI').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('API').length).toBeGreaterThan(0);
   });
 });

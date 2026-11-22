@@ -88,6 +88,9 @@ class BugsPage(BasePage):
     def submit_form(self) -> None:
         self.dialog.get_by_role("button", name="Сохранить", exact=True).click()
 
+    def expect_save_disabled(self) -> None:
+        expect(self.dialog.get_by_role("button", name="Сохранить", exact=True)).to_be_disabled()
+
     def cancel_form(self) -> None:
         self.dialog.get_by_role("button", name="Отмена", exact=True).click()
 
@@ -123,6 +126,11 @@ class BugsPage(BasePage):
     def add_comment(self, body: str) -> None:
         self.page.get_by_label("Новый комментарий").fill(body)
         self.page.get_by_role("button", name="Отправить", exact=True).click()
+
+    def set_metric_value(self, metric_name: str, value: str) -> None:
+        """METR-02: ввод значения метрики на странице бага."""
+        self.page.get_by_label(metric_name).fill(value)
+        self.page.get_by_role("button", name="Сохранить", exact=True).click()
 
     def expect_comment(self, body: str) -> None:
         expect(self.page.get_by_text(body, exact=False).first).to_be_visible()

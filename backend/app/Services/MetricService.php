@@ -99,23 +99,42 @@ class MetricService
     }
 
     /**
-     * Строки для экспорта в Excel (METR-03).
+     * Данные Excel-отчёта по метрикам проекта (METR-03).
      *
-     * @return array<int, array<int, mixed>>
+     * @return array{summary: array<int, array<string, mixed>>, by_status: array<int, array<string, mixed>>}
      */
-    public function exportRows(Project $project): array
+    public function reportData(Project $project): array
     {
-        return $this->metrics->listForProject($project)
-            ->map(function (Metric $metric) {
-                $values = $this->values->valuesForMetric($metric);
+        $summary = [];
+        $byStatus = [];
 
-                $indicator = $metric->type === 'numeric'
-                    ? $this->numericIndicators($values)['avg']
-                    : $this->topCategorical($values);
+        foreach ($this->metrics->listForProject($project) as $metric) {
+            $values = $this->values->valuesForMetric($metric);
+            $numeric = $metric->type === 'numeric';
+            $indicators = $numeric ? $this->numericIndicators($values) : null;
 
-                return [$metric->name, $metric->type, $values->count(), $indicator];
-            })
-            ->all();
+            $summary[] = [
+                'metric' => $metric->name,
+                'type' => $numeric ? 'Числовая' : 'Категориальная',
+                'count' => $values->count(),
+                'avg' => $indicators['avg'] ?? null,
+                'min' => $indicators['min'] ?? null,
+                'max' => $indicators['max'] ?? null,
+                'sum' => $indicators['sum'] ?? null,
+                'distribution' => $numeric ? '—' : $this->distributionText($values),
+            ];
+
+            foreach ($this->byStatus($values) as $row) {
+                $byStatus[] = [
+                    'metric' => $metric->name,
+                    'status' => $row['status'],
+                    'count' => $row['count'],
+                    'avg' => $row['avg'],
+                ];
+            }
+        }
+
+        return ['summary' => $summary, 'by_status' => $byStatus];
     }
 
     private function ensureMetricInProject(Project $project, Metric $metric): void
@@ -213,11 +232,18 @@ class MetricService
     /**
      * @param  Collection<int, MetricValue>  $values
      */
-    private function topCategorical(Collection $values): string
+    private function distributionText(Collection $values): string
     {
         $distribution = $this->categoricalIndicators($values);
 
-        return $distribution === [] ? '—' : $distribution[0]['value'];
+        if ($distribution === []) {
+            return '—';
+        }
+
+        return implode(
+            '; ',
+            array_map(fn (array $entry) => $entry['value'].': '.$entry['count'], $distribution),
+        );
     }
 
     /**

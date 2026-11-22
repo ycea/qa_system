@@ -2,29 +2,37 @@
 
 namespace App\Exports;
 
-use Maatwebsite\Excel\Concerns\FromArray;
-use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\Export;
+use Maatwebsite\Excel\Concerns\WithMultipleSheets;
+use Maatwebsite\Excel\Concerns\WithProperties;
 
-class MetricsExport implements FromArray, WithHeadings
+class MetricsExport implements Export, WithMultipleSheets, WithProperties
 {
     /**
-     * @param  array<int, array<int, mixed>>  $rows
+     * @param  array{summary: array<int, array<string, mixed>>, by_status: array<int, array<string, mixed>>}  $report
      */
-    public function __construct(private readonly array $rows) {}
+    public function __construct(private readonly array $report) {}
 
     /**
-     * @return array<int, array<int, mixed>>
+     * @return array<int, object>
      */
-    public function array(): array
+    public function sheets(): array
     {
-        return $this->rows;
+        return [
+            new MetricsSummarySheet($this->report['summary']),
+            new MetricsByStatusSheet($this->report['by_status']),
+        ];
     }
 
     /**
-     * @return array<int, string>
+     * @return array<string, string>
      */
-    public function headings(): array
+    public function properties(): array
     {
-        return ['Метрика', 'Тип', 'Кол-во значений', 'Показатель'];
+        return [
+            'creator' => 'QMS',
+            'title' => 'Метрики проекта',
+            'description' => 'Сформировано: '.now()->format('d.m.Y H:i'),
+        ];
     }
 }

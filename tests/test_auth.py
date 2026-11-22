@@ -77,11 +77,12 @@ class TestAuth01Registration:
         register_page.submit()
         register_page.expect_error()
 
-    def test_all_correct(self, page, register_page):
+    def test_all_correct(self, page, register_page, unique_suffix):
         """TC-08-AUTH-01-SUCCESS_ALL_CORRECT"""
+        login = f"newuser_{unique_suffix}"
         register_page.open()
-        register_page.fill_login("newuser_reg")
-        register_page.fill_email("newuser_reg@example.com")
+        register_page.fill_login(login)
+        register_page.fill_email(f"{login}@example.com")
         register_page.fill_password("Password123!")
         register_page.fill_confirm_password("Password123!")
         register_page.submit()

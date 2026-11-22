@@ -184,6 +184,7 @@ export default function HomePage() {
             name="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
+            slotProps={{ htmlInput: { maxLength: 500 } }}
           />
         </DialogContent>
         <DialogActions>
