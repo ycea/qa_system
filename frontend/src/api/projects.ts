@@ -1,4 +1,5 @@
 import api from './axios';
+import type { Paginated } from './types';
 export type MemberRole = 'admin' | 'developer' | 'tester';
 
 export type ProjectMember = {
@@ -23,8 +24,10 @@ export type Project = {
   updated_at: string;
 };
 
-export const fetchProjects = async (): Promise<Project[]> => {
-  const { data } = await api.get('/projects');
+export const fetchProjects = async (
+  params: { page?: number; per_page?: number } = {},
+): Promise<Paginated<Project>> => {
+  const { data } = await api.get('/projects', { params });
   return data;
 };
 

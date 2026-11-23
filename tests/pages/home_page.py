@@ -26,6 +26,11 @@ class HomePage(BasePage):
     def fill_project_description(self, value: str) -> None:
         self.page.fill(self.PROJECT_DESCRIPTION_INPUT, value)
 
+    def expect_description_length(self, length: int) -> None:
+        """Фактическая длина введённого описания (UI ограничивает 500 символов)."""
+        actual = self.page.input_value(self.PROJECT_DESCRIPTION_INPUT)
+        assert len(actual) == length, f"Ожидалось {length} символов, получено {len(actual)}"
+
     def submit_create_project(self) -> None:
         self.page.click(self.CREATE_SUBMIT_BUTTON)
 

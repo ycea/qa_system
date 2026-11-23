@@ -19,7 +19,7 @@ services:
 
     backend:
         build:
-            context: ./backend
+            context: ./backend/
             dockerfile: Dockerfile
         container_name: qms_backend
         restart: unless-stopped

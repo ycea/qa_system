@@ -4,33 +4,36 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Project;
+use App\Services\ProjectService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 
 class ProjectController extends Controller
 {
     /**
-     * Список проектов пользователя (PROJ-02).
+     * Доступные размеры страницы.
+     */
+    private const PER_PAGE_OPTIONS = [30, 50, 100];
+
+    private const DEFAULT_PER_PAGE = 30;
+
+    public function __construct(private readonly ProjectService $projects) {}
+
+    /**
+     * Список проектов пользователя с пагинацией (PROJ-02).
      */
     public function index(Request $request): JsonResponse
     {
-        $user = $request->user();
+        $validated = $request->validate([
+            'page' => ['nullable', 'integer', 'min:1'],
+            'per_page' => ['nullable', 'integer', Rule::in(self::PER_PAGE_OPTIONS)],
+        ]);
 
-        // Проекты, где пользователь участник
-        $memberProjects = $user->projects()
-            ->withCount('bugs')
-            ->get();
+        $perPage = (int) ($validated['per_page'] ?? self::DEFAULT_PER_PAGE);
 
-        // Проекты, где пользователь владелец
-        $ownedProjects = $user->ownedProjects()
-            ->withCount('bugs')
-            ->get();
-
-        // Объединяем и убираем дубликаты
-        $allProjects = $memberProjects->merge($ownedProjects)->unique('id')->values();
-
-        return response()->json($allProjects);
+        return response()->json($this->projects->listForUser($request->user(), $perPage));
     }
 
     /**
@@ -40,19 +43,14 @@ class ProjectController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'description' => ['nullable', 'string', 'max:500'],
+        ], [
+            'name.required' => 'Введите название проекта.',
+            'name.max' => 'Название слишком длинное (макс. 255).',
+            'description.max' => 'Описание не должно превышать 500 символов.',
         ]);
 
-        $user = $request->user();
-
-        $project = Project::create([
-            'name' => $validated['name'],
-            'description' => $validated['description'] ?? null,
-            'owner_id' => $user->id,
-        ]);
-
-        // Владелец автоматически становится админом
-        $project->members()->attach($user->id, ['role' => 'admin']);
+        $project = $this->projects->create($request->user(), $validated);
 
         return response()->json([
             'message' => 'Проект успешно создан.',
@@ -61,30 +59,20 @@ class ProjectController extends Controller
     }
 
     /**
-     * Просмотр одного проекта (задел под PROJ-04 / DASH-01).
+     * Просмотр одного проекта (PROJ-04 / DASH-01).
      */
-    public function show(Request $request, Project $project): JsonResponse
+    public function show(Project $project): JsonResponse
     {
-        $user = $request->user();
+        Gate::authorize('view', $project);
 
-        $isMember = $project->members()->where('user_id', $user->id)->exists();
-        $isOwner = $project->owner_id === $user->id;
-
-        if (! $isMember && ! $isOwner) {
-            abort(403, 'Доступ запрещён.');
-        }
-
-        $project->load('members');
-        $project->loadCount('bugs');
-
-        return response()->json($project);
+        return response()->json($this->projects->getForUser($project));
     }
 
-    public function destroy(Request $request, Project $project): JsonResponse
+    public function destroy(Project $project): JsonResponse
     {
         Gate::authorize('delete', $project);
 
-        $project->delete(); // каскад сработает на уровне БД
+        $this->projects->delete($project);
 
         return response()->json(['message' => 'Проект удалён.']);
     }

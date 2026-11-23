@@ -15,10 +15,12 @@ class Status extends Model
         'project_id',
         'name',
         'is_default',
+        'is_closed',
     ];
 
     protected $casts = [
         'is_default' => 'boolean',
+        'is_closed' => 'boolean',
     ];
 
     public function project(): BelongsTo

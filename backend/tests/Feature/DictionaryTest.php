@@ -33,8 +33,8 @@ test('админ видит список статусов проекта', funct
 
     $response->assertOk()
         ->assertJsonCount(6, 'items')
-        ->assertJsonFragment(['name' => 'Новая', 'is_default' => true])
-        ->assertJsonFragment(['name' => 'Закрыта']);
+        ->assertJsonFragment(['name' => 'Новый', 'is_default' => true])
+        ->assertJsonFragment(['name' => 'Закрыт']);
 });
 
 test('админ видит список приоритетов проекта', function () {
@@ -89,7 +89,7 @@ test('нельзя создать статус с дублирующимся н�
 
     $response = fromFrontend($this)->actingAs($owner)
         ->postJson("/api/projects/{$project->id}/dictionaries/statuses", [
-            'name' => 'Новая', // уже есть
+            'name' => 'Новый', // уже есть
         ]);
 
     $response->assertStatus(422)
@@ -133,7 +133,7 @@ test('нельзя переименовать статус в существую
 
     $response = fromFrontend($this)->actingAs($owner)
         ->putJson("/api/projects/{$project->id}/dictionaries/statuses/{$status->id}", [
-            'name' => 'Новая',
+            'name' => 'Новый',
         ]);
 
     $response->assertStatus(422)
@@ -160,17 +160,17 @@ test('админ может удалить неиспользуемый стат
 test('нельзя удалить используемый статус', function () {
     [$owner, $project] = makeProjectWithAdmin();
 
-    // Создаём баг — статус «Новая» уже используется
+    // Создаём баг — статус «Новый» уже используется
     Bug::create([
         'project_id' => $project->id,
-        'status_id' => $project->statuses()->where('name', 'Новая')->first()->id,
+        'status_id' => $project->statuses()->where('name', 'Новый')->first()->id,
         'priority_id' => $project->priorities()->first()->id,
         'severity_id' => $project->severities()->first()->id,
         'created_by' => $owner->id,
         'title' => 'Тестовый баг',
     ]);
 
-    $status = $project->statuses()->where('name', 'Новая')->first();
+    $status = $project->statuses()->where('name', 'Новый')->first();
 
     $response = fromFrontend($this)->actingAs($owner)
         ->deleteJson("/api/projects/{$project->id}/dictionaries/statuses/{$status->id}");

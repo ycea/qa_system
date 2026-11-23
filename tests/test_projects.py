@@ -35,14 +35,26 @@ class TestProj01Creation:
         home_page.submit_create_project()
         home_page.expect_error()
 
-    def test_very_long_description_others_correct(self, page, logged_in_user, home_page):
-        """TC-04-PROJ-01-FAIL-VERY_LONG_DESCRIPTION-OTHERS_CORRECT"""
+    def test_description_limited_to_500(self, page, logged_in_user, home_page, unique_suffix):
+        """TC-04-PROJ-01-SUCCESS_DESCRIPTION_LIMIT: UI обрезает описание до 500 символов."""
+        name = f"Limit Desc {unique_suffix}"
         home_page.open()
         home_page.click_create_project()
-        home_page.fill_project_name("Valid Name")
-        home_page.fill_project_description("a" * 3000)
+        home_page.fill_project_name(name)
+        home_page.fill_project_description("a" * 501)
+        home_page.expect_description_length(500)
         home_page.submit_create_project()
-        home_page.expect_error()
+        home_page.expect_project_card_with_title(name)
+
+    def test_max_description_allowed(self, page, logged_in_user, home_page, unique_suffix):
+        """TC-04b-PROJ-01-SUCCESS_MAX_DESCRIPTION: ровно 500 символов допустимо."""
+        name = f"Max Desc {unique_suffix}"
+        home_page.open()
+        home_page.click_create_project()
+        home_page.fill_project_name(name)
+        home_page.fill_project_description("a" * 500)
+        home_page.submit_create_project()
+        home_page.expect_project_card_with_title(name)
 
     def test_name_only_description_empty(self, page, logged_in_user, home_page):
         """TC-05-PROJ-01-SUCCESS_NAME_ONLY_DESCRIPTION_EMPTY"""
@@ -69,7 +81,7 @@ class TestProj01Creation:
         home_page.fill_project_name("AdmFin Project")
         home_page.fill_project_description("Desc")
         home_page.submit_create_project()
-        home_page.click_project_card("Admin Project")
+        home_page.click_project_card("AdmFin Project")
         project_page.expect_url_matches(r"/projects/\d+")
         project_page.click_team_tab()
         project_page.expect_member_with_role(logged_in_user["login"], "Администратор")
@@ -606,8 +618,8 @@ class TestProj06Dictionaries:
         project_page.click_dictionaries_tab()
         project_page.click_dictionary_type("statuses")
         # дефолтный статус удалить нельзя, а обычный — можно
-        project_page.expect_delete_button_disabled("Новая")
-        project_page.expect_delete_button_enabled("Назначена")
+        project_page.expect_delete_button_disabled("Новый")
+        project_page.expect_delete_button_enabled("Назначен")
 
     def test_delete_used_element_direct_action(
         self, page, logged_in_user, created_project, project_page
@@ -617,8 +629,8 @@ class TestProj06Dictionaries:
         project_page.click_dictionaries_tab()
         project_page.click_dictionary_type("statuses")
         # элемент никуда не исчезает: кнопка отключена, состав справочника неизменен
-        project_page.expect_delete_button_disabled("Новая")
-        project_page.expect_dictionary_item("Новая")
+        project_page.expect_delete_button_disabled("Новый")
+        project_page.expect_dictionary_item("Новый")
         project_page.expect_dictionary_items_count(6)
 
     def test_admin_sees_all_dictionary_types(
@@ -629,7 +641,7 @@ class TestProj06Dictionaries:
         project_page.click_dictionaries_tab()
         project_page.expect_dictionaries_tab_visible()
         project_page.click_dictionary_type("statuses")
-        project_page.expect_dictionary_item("Новая")
+        project_page.expect_dictionary_item("Новый")
         project_page.click_dictionary_type("priorities")
         project_page.expect_dictionary_item("low")
         project_page.click_dictionary_type("severities")

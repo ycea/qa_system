@@ -48,7 +48,7 @@ jobs:
               uses: shivammathur/setup-php@v2
               with:
                   php-version: "8.4"
-                  extensions: mbstring, pdo_pgsql, bcmath, gd, exif, pcntl
+                  extensions: mbstring, pdo_pgsql, bcmath, gd, exif, pcntl, zip, dom, simplexml, xml, xmlreader, xmlwriter
                   coverage: xdebug
                   tools: composer:v2
 
@@ -94,7 +94,7 @@ jobs:
 
             - name: Run Pest tests with coverage
               # Используем явные пути относительно текущей рабочей директории (backend)
-              run: ./vendor/bin/pest --coverage --log-junit=./coverage/junit.xml --coverage-clover=./coverage/clover.xml --min=10
+              run: ./vendor/bin/pest --coverage --log-junit=./coverage/junit.xml --coverage-clover=./coverage/clover.xml --min=80
               env:
                   DB_CONNECTION: pgsql
                   DB_HOST: 127.0.0.1

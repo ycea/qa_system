@@ -67,4 +67,9 @@ class Bug extends Model
     {
         return $this->hasMany(MetricValue::class);
     }
+
+    public function histories(): HasMany
+    {
+        return $this->hasMany(BugHistory::class);
+    }
 }

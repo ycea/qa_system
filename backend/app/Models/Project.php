@@ -31,12 +31,12 @@ class Project extends Model
     {
         // Статусы (BUG-04)
         $statuses = [
-            ['name' => 'Новая',       'is_default' => true],
-            ['name' => 'Назначена',   'is_default' => false],
-            ['name' => 'В работе',    'is_default' => false],
-            ['name' => 'Исправлена',  'is_default' => false],
-            ['name' => 'Переоткрыта', 'is_default' => false],
-            ['name' => 'Закрыта',     'is_default' => false],
+            ['name' => 'Новый',      'is_default' => true,  'is_closed' => false],
+            ['name' => 'Назначен',   'is_default' => false, 'is_closed' => false],
+            ['name' => 'В работе',   'is_default' => false, 'is_closed' => false],
+            ['name' => 'Исправлен',  'is_default' => false, 'is_closed' => false],
+            ['name' => 'Переоткрыт', 'is_default' => false, 'is_closed' => false],
+            ['name' => 'Закрыт',     'is_default' => false, 'is_closed' => true],
         ];
         foreach ($statuses as $status) {
             $this->statuses()->create($status);
