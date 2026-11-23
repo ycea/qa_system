@@ -118,6 +118,7 @@ export default function TeamTab({ projectId }: { projectId: number }) {
                         <span>
                           <IconButton
                             color="error"
+                            data-testid="delete-member-btn"
                             disabled={m.role === 'admin'}
                             onClick={() => {
                               if (confirm(`Удалить ${m.name} из проекта?`)) {

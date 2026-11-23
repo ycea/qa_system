@@ -151,7 +151,7 @@ export default function DictionariesTab({ projectId }: { projectId: number }) {
                   </TableCell>
                   <TableCell align="right">
                     <Tooltip title="Редактировать">
-                      <IconButton onClick={() => openEdit(item)}>
+                      <IconButton data-testid="edit-member-btn" onClick={() => openEdit(item)}>
                         <Edit />
                       </IconButton>
                     </Tooltip>
@@ -168,6 +168,7 @@ export default function DictionariesTab({ projectId }: { projectId: number }) {
                         <IconButton
                           color="error"
                           disabled={item.in_use || item.is_default}
+                          data-testid="delete-member-btn"
                           onClick={() => {
                             if (confirm(`Удалить «${item.name}»?`)) {
                               deleteMutation.mutate(item.id);

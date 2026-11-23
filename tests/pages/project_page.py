@@ -13,8 +13,8 @@ class ProjectPage(BasePage):
     MEMBERS_TABLE = "table"
     ERROR_ALERT = ".MuiAlert-root"
     DICTIONARIES_HEADING = "text=Справочники проекта"
-    DELETE_ICON_BUTTON = 'button:has([data-testid="DeleteIcon"])'
-    EDIT_ICON_BUTTON = 'button:has([data-testid="EditIcon"])'
+    DELETE_ICON_BUTTON = 'button[data-testid="delete-member-btn"]'
+    EDIT_ICON_BUTTON = 'button[data-testid="edit-member-btn"]'
 
     TABS = {
         "overview": "Обзор",

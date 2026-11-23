@@ -82,7 +82,11 @@ export default function ProjectPage() {
         <Typography variant="h4">{project.name}</Typography>
         {isOwner && (
           <Tooltip title="Удалить проект">
-            <IconButton color="error" onClick={() => setDeleteOpen(true)}>
+            <IconButton
+              data-testid="delete-member-btn"
+              color="error"
+              onClick={() => setDeleteOpen(true)}
+            >
               <Delete />
             </IconButton>
           </Tooltip>
