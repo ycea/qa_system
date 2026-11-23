@@ -19,8 +19,9 @@ services:
 
     backend:
         build:
-            context: ./backend
+            context: ./backend/
             dockerfile: Dockerfile
+            network: host
         container_name: qms_backend
         restart: unless-stopped
         entrypoint: ["/usr/local/bin/entrypoint.sh"]

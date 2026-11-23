@@ -94,7 +94,7 @@ jobs:
 
             - name: Run Pest tests with coverage
               # Используем явные пути относительно текущей рабочей директории (backend)
-              run: ./vendor/bin/pest --coverage --log-junit=./coverage/junit.xml --coverage-clover=./coverage/clover.xml --min=10
+              run: ./vendor/bin/pest --coverage --log-junit=./coverage/junit.xml --coverage-clover=./coverage/clover.xml --min=80
               env:
                   DB_CONNECTION: pgsql
                   DB_HOST: 127.0.0.1
